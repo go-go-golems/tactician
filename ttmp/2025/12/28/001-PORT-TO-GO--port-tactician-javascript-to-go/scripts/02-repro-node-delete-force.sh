@@ -14,7 +14,7 @@ set -euo pipefail
 #
 # Outputs:
 #   - Prints a short summary to stdout
-#   - Writes a full log to: various/repro-node-delete-force-<timestamp>.log
+#   - Writes a full log to a ticket directory (prefers `various/` if present; otherwise `archive/`)
 
 ROOT="/home/manuel/workspaces/2025-12-28/port-tactician-go"
 TACTICIAN_MODULE="$ROOT/tactician"
@@ -22,6 +22,7 @@ TACTICIAN_PKG="./cmd/tactician"
 
 TICKET_DIR="$TACTICIAN_MODULE/ttmp/2025/12/28/001-PORT-TO-GO--port-tactician-javascript-to-go"
 SCRIPTS_DIR="$TICKET_DIR/scripts"
+ARCHIVE_DIR="$TICKET_DIR/archive"
 VARIOUS_DIR="$TICKET_DIR/various"
 
 if [[ ! -d "$TACTICIAN_MODULE" ]]; then
@@ -32,13 +33,18 @@ if [[ ! -d "$SCRIPTS_DIR" ]]; then
   echo "ERROR: expected ticket scripts dir at: $SCRIPTS_DIR" >&2
   exit 2
 fi
-if [[ ! -d "$VARIOUS_DIR" ]]; then
-  echo "ERROR: expected ticket various dir at: $VARIOUS_DIR" >&2
+if [[ ! -d "$ARCHIVE_DIR" ]]; then
+  echo "ERROR: expected ticket archive dir at: $ARCHIVE_DIR" >&2
   exit 2
 fi
 
+LOG_DIR="$ARCHIVE_DIR"
+if [[ -d "$VARIOUS_DIR" ]]; then
+  LOG_DIR="$VARIOUS_DIR"
+fi
+
 ts="$(date -u +%Y%m%d-%H%M%S)"
-LOG="$VARIOUS_DIR/repro-node-delete-force-$ts.log"
+LOG="$LOG_DIR/repro-node-delete-force-$ts.log"
 
 WORK="$(mktemp -d)"
 BIN="$WORK/tactician"

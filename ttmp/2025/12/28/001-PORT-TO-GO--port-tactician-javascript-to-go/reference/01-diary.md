@@ -262,6 +262,25 @@ This step ran the new repro script and clarified the real issue: `--force` **is*
 ### What should be done in the future
 - If we need even cleaner traces, consider having the smoke script redirect command stderr into stdout per step so headings/errors stay ordered.
 
+---
+
+## Step 27: Make repro script robust to missing `various/` (no mkdir)
+
+This step made the repro script resilient: the ticket workspace doesn’t always have a `various/` directory present, and we don’t want the script to fail just because a log folder is missing. Instead of creating directories, we fall back to writing logs into `archive/`, which always exists in the ticket.
+
+**Commit (ticket script):** N/A (committed immediately after this change)
+
+### What I did
+- Updated `scripts/02-repro-node-delete-force.sh` to:
+  - prefer writing logs into `various/` if it exists,
+  - otherwise write logs into `archive/`.
+
+### Why
+- Keeps scripts runnable in more environments without adding extra setup steps.
+- Avoids needing directory creation as part of the workflow.
+
+---
+
 ## Step 1: Initial Analysis and Documentation Setup
 
 This step established the foundation for the port by creating the ticket workspace, analyzing the JavaScript codebase, and creating comprehensive documentation mapping all commands and flags to Go implementation patterns.
