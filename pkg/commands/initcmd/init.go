@@ -7,6 +7,7 @@ import (
 	"github.com/go-go-golems/glazed/pkg/cmds/schema"
 	"github.com/go-go-golems/glazed/pkg/cmds/values"
 	"github.com/go-go-golems/tactician/pkg/commands/sections"
+	"github.com/go-go-golems/tactician/pkg/store"
 	"github.com/pkg/errors"
 )
 
@@ -37,7 +38,16 @@ func NewInitCommand() (*InitCommand, error) {
 var _ cmds.BareCommand = &InitCommand{}
 
 func (c *InitCommand) Run(ctx context.Context, vals *values.Values) error {
-	_ = ctx
-	_ = vals
-	return errors.New("init: not implemented yet")
+	settings := &sections.TacticianSettings{}
+	if err := values.DecodeSectionInto(vals, sections.TacticianSlug, settings); err != nil {
+		return errors.Wrap(err, "decode tactician settings")
+	}
+
+	if err := store.InitDir(settings.Dir); err != nil {
+		return err
+	}
+
+	// TODO(manuel): Import default tactics into .tactician/tactics/ (one file per tactic).
+	// TODO(manuel): Optionally set project metadata (name/root_goal).
+	return nil
 }

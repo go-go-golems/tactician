@@ -146,3 +146,8 @@ func ensureTacticianDir(tacticianDir string) error {
 	}
 	return nil
 }
+
+// InitDir creates the `.tactician/` directory structure and minimal YAML files if missing.
+func InitDir(tacticianDir string) error {
+	return ensureTacticianDir(tacticianDir)
+}
