@@ -398,3 +398,25 @@ This step made `pkg/store` actually useful: it now loads `.tactician/project.yam
 
 ### What should be done in the future
 - Add tactics import/export (`tactics/<id>.yaml`) and integrate into `State`.
+
+---
+
+## Step 10: Implement `init` to scaffold `.tactician/` YAML
+
+This step made the first end-user command actually do something in the new world: `tactician init` now creates the `.tactician/` directory structure and minimal YAML files (`project.yaml`, `action-log.yaml`, and the `tactics/` folder). It doesn’t populate tactics yet, but it unlocks running the CLI without disk sqlite files.
+
+**Commit (code):** 1a08216e9d2758779317a2c17f1a974873c96da4 — "Init: create .tactician YAML scaffold"
+
+### What I did
+- Exported `store.InitDir(...)` and wired `init` to call it after decoding `--tactician-dir`.
+- Ensured `.tactician/` is created with minimal default YAML files when missing.
+
+### Why
+- We need a stable “project initialization” story that creates YAML, not sqlite files.
+
+### What warrants a second pair of eyes
+- Default project metadata values (currently `untitled` + empty root goal).
+- Whether init should fail if `.tactician/` already exists vs be idempotent (currently: idempotent).
+
+### What should be done in the future
+- Load default tactics and write them as one-file-per-tactic under `.tactician/tactics/`.
