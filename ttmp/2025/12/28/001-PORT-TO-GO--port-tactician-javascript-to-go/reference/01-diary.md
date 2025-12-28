@@ -523,3 +523,43 @@ This step expanded the “read-only” surface area: `graph`, `goals`, and `hist
 
 ### What should be done in the future
 - Implement `search` and `apply` against the tactics + project store layer to complete the core CLI.
+
+---
+
+## Step 15: Implement `search` (rank tactics using in-memory state)
+
+This step implemented the core discovery workflow: `tactician search` now loads project + tactics YAML into the in-memory sqlite DB, computes dependency readiness against the current project graph, applies filters, and ranks tactics using the same multi-factor scoring model as the JS CLI.
+
+**Commit (code):** 3447b63b4f5941200bf060df820c08aa208d260a — "Search: rank tactics using in-memory state"
+
+### What I did
+- Implemented `search` using:
+  - `TacticsDB.SearchTactics` (type/tags/keyword filtering)
+  - dependency readiness computed from project node outputs / completion status
+  - scoring model (dependency readiness + critical path + keyword relevance + goal alignment)
+- Output rows include ready/satisfied/missing/can_introduce plus optional verbose score breakdown.
+
+### What warrants a second pair of eyes
+- Scoring weights and parity with JS behavior.
+- Performance of per-node dependency queries on large graphs (acceptable for now; optimize later if needed).
+
+---
+
+## Step 16: Implement `apply` (materialize tactic into nodes/edges)
+
+This step implemented the “do it” workflow: `tactician apply <tactic-id>` now checks dependencies, creates nodes (premises + subtasks or single output), adds edges, logs the action, and saves the updated YAML state back to `.tactician/`.
+
+**Commit (code):** 2189c88d7eb9a72047552f6ea99766334551f191 — "Apply: create nodes/edges from tactic"
+
+### What I did
+- Implemented dependency checking (required match deps vs optional premises).
+- Implemented node creation plan:
+  - premise nodes introduced when missing and allowed
+  - subtask nodes + their internal `depends_on` edges
+  - match dependency edges from satisfied outputs to new nodes
+- Enforced non-interactive safety: requires `--yes` (no prompting).
+- Logged `tactic_applied` into action log and saved YAML.
+
+### What warrants a second pair of eyes
+- Node ID strategy (JS uses output strings as IDs for premise and single-output tactics; confirm this is desired).
+- Edge creation semantics from match deps to all created nodes (mirrors JS, but review).
