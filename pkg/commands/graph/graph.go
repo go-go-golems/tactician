@@ -8,6 +8,7 @@ import (
 	"github.com/go-go-golems/glazed/pkg/cmds/schema"
 	"github.com/go-go-golems/glazed/pkg/cmds/values"
 	"github.com/go-go-golems/glazed/pkg/middlewares"
+	"github.com/go-go-golems/tactician/pkg/commands/sections"
 	"github.com/pkg/errors"
 )
 
@@ -17,6 +18,11 @@ type GraphCommand struct {
 
 func NewGraphCommand() (*GraphCommand, error) {
 	glazedSection, err := schema.NewGlazedSchema()
+	if err != nil {
+		return nil, err
+	}
+
+	projectSection, err := sections.NewProjectSection()
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +47,7 @@ func NewGraphCommand() (*GraphCommand, error) {
 		return nil, err
 	}
 
-	s := schema.NewSchema(schema.WithSections(glazedSection, defaultSection))
+	s := schema.NewSchema(schema.WithSections(glazedSection, projectSection, defaultSection))
 
 	cmdDef := cmds.NewCommandDefinition(
 		"graph",

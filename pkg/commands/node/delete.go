@@ -7,6 +7,7 @@ import (
 	"github.com/go-go-golems/glazed/pkg/cmds/fields"
 	"github.com/go-go-golems/glazed/pkg/cmds/schema"
 	"github.com/go-go-golems/glazed/pkg/cmds/values"
+	"github.com/go-go-golems/tactician/pkg/commands/sections"
 	"github.com/pkg/errors"
 )
 
@@ -15,6 +16,11 @@ type NodeDeleteCommand struct {
 }
 
 func NewNodeDeleteCommand() (*NodeDeleteCommand, error) {
+	projectSection, err := sections.NewProjectSection()
+	if err != nil {
+		return nil, err
+	}
+
 	defaultSection, err := schema.NewSection(
 		schema.DefaultSlug,
 		"Default",
@@ -37,7 +43,7 @@ func NewNodeDeleteCommand() (*NodeDeleteCommand, error) {
 		return nil, err
 	}
 
-	s := schema.NewSchema(schema.WithSections(defaultSection))
+	s := schema.NewSchema(schema.WithSections(projectSection, defaultSection))
 
 	cmdDef := cmds.NewCommandDefinition(
 		"delete",
