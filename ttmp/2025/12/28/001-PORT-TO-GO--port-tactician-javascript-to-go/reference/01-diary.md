@@ -211,6 +211,34 @@ This step reran the smoke test via the ticket script to confirm the previous fix
 
 ---
 
+## Step 25: Store a dedicated repro script for `node delete --force`
+
+This step captures the “node delete force flag not honored / weird exit code” investigation as a dedicated ticket script. The goal is to avoid losing nuance in terminal scrollback and to make every future debugging attempt reproducible and reviewable.
+
+**Commit (ticket script):** N/A (will be committed immediately after adding the script)
+
+### What I did
+- Added a new repro script:
+  - `scripts/02-repro-node-delete-force.sh`
+- The script:
+  - builds a `tactician` binary into a temp WORK dir,
+  - creates a minimal state (init → root complete → apply two tactics),
+  - runs `node delete` with `--force` both before and after args,
+  - uses `--print-parsed-parameters` to show what Glazed thinks was parsed,
+  - writes a timestamped log under `various/`.
+
+### Why
+- This is exactly the kind of “tiny but subtle CLI parsing bug” that benefits from a permanent trace.
+- The repro includes exit codes + parsed layers, which should tell us whether the bug is:
+  - pflag/Cobra interspersed parsing,
+  - Glazed argument gathering order,
+  - or `node delete` force logic itself.
+
+### What should be done next
+- `chmod +x` the script, run it via `./scripts/02-repro-node-delete-force.sh`, and use the log output to drive the smallest code fix.
+
+---
+
 ## Step 1: Initial Analysis and Documentation Setup
 
 This step established the foundation for the port by creating the ticket workspace, analyzing the JavaScript codebase, and creating comprehensive documentation mapping all commands and flags to Go implementation patterns.
