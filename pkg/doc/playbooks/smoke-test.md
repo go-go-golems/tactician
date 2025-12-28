@@ -170,7 +170,7 @@ This step validates blocked-node protection.
 # This may fail if the node blocks others; that is expected.
 go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician node delete requirements_document
 
-# Force delete should succeed.
+# If the unforced delete failed due to blocking, force delete should succeed.
 go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician node delete requirements_document --force
 ```
 

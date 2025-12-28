@@ -91,10 +91,14 @@ run_step "9b) history --summary" "$BIN" history --summary
 run_step "9c) history --since 1d" "$BIN" history --since 1d
 
 echo
-echo "== 10a) node delete requirements_document (may fail; expected sometimes) =="
-"$BIN" node delete requirements_document || true
-
-run_step "10b) node delete requirements_document --force" "$BIN" node delete requirements_document --force
+echo "== 10) node delete requirements_document (blocked-node protection) =="
+# Try unforced delete first. If it fails (likely due to blocking), retry with --force.
+if "$BIN" node delete requirements_document; then
+  echo "NOTE: unforced delete succeeded; skipping forced delete"
+else
+  echo "NOTE: unforced delete failed; retrying with --force"
+  run_step "10b) node delete requirements_document --force" "$BIN" node delete requirements_document --force
+fi
 
 echo
 echo "== DONE =="

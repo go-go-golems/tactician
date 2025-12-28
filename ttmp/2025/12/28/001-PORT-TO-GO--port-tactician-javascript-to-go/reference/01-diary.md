@@ -239,6 +239,29 @@ This step captures the “node delete force flag not honored / weird exit code�
 
 ---
 
+## Step 26: Run repro; conclude `--force` parsing works; fix smoke-test delete step
+
+This step ran the new repro script and clarified the real issue: `--force` **is** parsed and honored correctly. The earlier “force not honored” impression came from two things: (1) the smoke script always ran the forced delete even when the unforced delete already succeeded, and (2) stderr/stdout interleaving can make the unforced error message appear under the next step’s heading.
+
+**Commit (ticket):** N/A (this step is recorded alongside the script/playbook updates)
+
+### What I did
+- Ran:
+  - `./ttmp/.../scripts/02-repro-node-delete-force.sh`
+- Read the generated log under `various/` (includes parsed parameters + exit codes).
+- Updated the smoke test runner script to make the delete step conditional.
+- Updated the smoke test playbook text to clarify the conditional nature of the forced delete.
+
+### What worked
+- `--print-parsed-parameters` shows `default.force.value: true` for both “flags after args” and “flags before args”.
+- Unforced delete exits non-zero when the node blocks others; forced delete succeeds (exit 0) and removes the node as expected.
+
+### What was tricky to build
+- The combined terminal display can reorder stdout headings and stderr errors, which is a common “CLI debugging illusion”. Capturing logs to a file avoids this.
+
+### What should be done in the future
+- If we need even cleaner traces, consider having the smoke script redirect command stderr into stdout per step so headings/errors stay ordered.
+
 ## Step 1: Initial Analysis and Documentation Setup
 
 This step established the foundation for the port by creating the ticket workspace, analyzing the JavaScript codebase, and creating comprehensive documentation mapping all commands and flags to Go implementation patterns.
