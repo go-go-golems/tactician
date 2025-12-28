@@ -447,3 +447,26 @@ This step completed the other half of the “state load” story: tactics are no
 
 ### What should be done in the future
 - Update `init` to seed default tactics into `.tactician/tactics/` from the JS defaults.
+
+---
+
+## Step 12: Seed embedded default tactics on `init`
+
+This step completed the initialization story: `tactician init` now seeds a built-in tactics library into `.tactician/tactics/` as **one YAML file per tactic**. The tactics library is embedded into the Go binary so init does not depend on the JS source tree being present.
+
+**Commit (code):** 50c0e08efbea06d5f7bc4916f5bab0c0fa8e4ae3 — "Init: seed default tactics into .tactician/tactics"
+
+### What I did
+- Added `pkg/defaults/default-tactics.yaml` + `pkg/defaults/defaults.go` (go:embed).
+- Updated `init` to parse the embedded YAML list and write missing tactic files.
+- Made `TacticsDB.AddTactic` support JS compatibility where subtasks can live under `data.subtasks`.
+
+### Why
+- `init` should be self-contained and leave the project with a usable tactics library immediately.
+
+### What warrants a second pair of eyes
+- Embedded library size / maintenance: confirm we’re comfortable vendoring this YAML into the Go module.
+- Subtask parsing from `data.subtasks`: confirm the coercion rules match the JS behavior.
+
+### What should be done in the future
+- Implement actual command logic using `store.Load`/`Save`, starting with `node add/show/edit/delete`.
