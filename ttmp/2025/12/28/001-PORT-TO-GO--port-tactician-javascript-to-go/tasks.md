@@ -43,6 +43,7 @@
   - [x] DB compatibility helpers (tactics data.subtasks)
   - [ ] command settings decoding
 - [ ] Add integration tests:
+  - [x] init → add node → apply (CLI-level smoke)
   - [ ] init → add node → search → apply → graph
   - [ ] Mermaid outputs
   - [ ] flag combinations

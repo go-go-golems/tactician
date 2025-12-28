@@ -585,3 +585,25 @@ This step added a small but meaningful test baseline to reduce regressions while
 
 ### What should be done in the future
 - Add command-level integration tests (init → add → search → apply) using a temp `.tactician/` directory and `go run` (or by directly invoking command structs).
+
+---
+
+## Step 18: Add CLI integration smoke test
+
+This step added a black-box smoke test that builds the `tactician` binary and runs a minimal end-to-end workflow against a temp directory. It validates that the Cobra wiring, Glazed parsing, YAML store, and in-memory sqlite all work together when executed as a real CLI.
+
+**Commit (tests):** abb965bf51e4950b7c7bbe0707c967ac5b35063f — "Test: CLI integration init/add/apply"
+
+### What I did
+- Added a test that:
+  - `go build`’s `./cmd/tactician`
+  - runs `tactician init`
+  - runs `tactician node add ...`
+  - runs `tactician apply gather_requirements --yes`
+  - asserts the expected nodes are present in `.tactician/project.yaml`
+
+### What didn't work
+- Initially picked a tactic with required dependencies, which made the test fail for the wrong reason; switched to a dependency-free tactic (`gather_requirements`) so the test focuses on plumbing.
+
+### What should be done in the future
+- Extend the smoke test to cover `search` and `graph` outputs, and basic `--mermaid` flows.
