@@ -129,12 +129,24 @@ func (c *HistoryCommand) RunIntoGlazeProcessor(
 		return err
 	}
 	for _, l := range logs {
+		var details any
+		if l.Details != nil {
+			details = *l.Details
+		}
+		var nodeID any
+		if l.NodeID != nil {
+			nodeID = *l.NodeID
+		}
+		var tacticID any
+		if l.TacticID != nil {
+			tacticID = *l.TacticID
+		}
 		row := types.NewRow(
 			types.MRP("timestamp", l.Timestamp),
 			types.MRP("action", l.Action),
-			types.MRP("details", l.Details),
-			types.MRP("node_id", l.NodeID),
-			types.MRP("tactic_id", l.TacticID),
+			types.MRP("details", details),
+			types.MRP("node_id", nodeID),
+			types.MRP("tactic_id", tacticID),
 		)
 		if err := gp.AddRow(ctx, row); err != nil {
 			return err
