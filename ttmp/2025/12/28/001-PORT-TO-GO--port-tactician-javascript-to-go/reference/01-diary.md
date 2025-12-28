@@ -126,6 +126,91 @@ This step actually ran the smoke test script and used the resulting `.tactician/
 
 ---
 
+## Step 22: Fix `history` table output (no pointer addresses)
+
+This step fixed an embarrassing-but-important UX issue: `tactician history` was emitting pointer addresses (like `0xc000...`) instead of the actual `details`, `node_id`, and `tactic_id` strings. The underlying data was fine (YAML had correct strings), so the fix was purely about how we build Glazed rows.
+
+**Commit (code):** 96d58780fc777aa7a407630e1f33960af80e27bf — "History: output string values for details/node_id/tactic_id"
+
+### What I did
+- Updated `pkg/commands/history/history.go` to dereference `*string` fields before passing them to Glazed rows (use `nil` when absent).
+
+### Why
+- The action log is a primary debugging surface; pointer addresses make it unusable and confusing.
+
+### What worked
+- The smoke test run now shows meaningful strings in the `history` table output.
+
+### What warrants a second pair of eyes
+- Confirm that emitting `nil` (rendering as `<nil>`) is the desired UX for absent `node_id` / `tactic_id`, vs empty string.
+
+### Code review instructions
+- Start at `pkg/commands/history/history.go`.
+- Validate with:
+  - `tactician history`
+
+---
+
+## Step 23: Fix `apply` to persist match dependency edges
+
+This step fixed a semantic correctness bug: applying a tactic with `match` dependencies created the nodes, but didn’t create the edges in the project graph. That breaks “blocked vs ready” semantics and makes `graph`/`goals` misleading.
+
+**Commit (code):** 95b862d03a7246b259962a0804e9cd500206d1da — "Apply: create edges from existing match deps even if incomplete"
+
+### What I did
+- Changed `pkg/commands/apply/apply.go` to create edges for every existing `match` dependency node, even if that dependency node is not complete.
+
+### Why
+- The dependency edge should exist whenever the dependency node exists; completion status should control readiness/blocked, not edge existence.
+
+### What worked
+- After this change, `goals` and `graph` show `technical_specification` as blocked by `requirements_document` until the dependency is complete.
+
+### What warrants a second pair of eyes
+- Confirm that when `--force` is used we still want edges for existing deps (current behavior), and we intentionally *do not* create placeholder dep nodes for missing match deps.
+
+### Code review instructions
+- Start at `pkg/commands/apply/apply.go` around the “Edges from match dependencies” block.
+- Validate by applying `gather_requirements` then `write_technical_spec` and inspecting edges.
+
+---
+
+## Step 24: Re-run smoke test after fixes; note remaining mismatch in delete step
+
+This step reran the smoke test via the ticket script to confirm the previous fixes and see what remains off. The primary surfaces now look correct (edges + history output), but the delete portion of the playbook/script still doesn’t line up cleanly with expected behavior.
+
+**Commit (ticket script):** N/A (no script changes in this step)
+
+### What I did
+- Ran:
+  - `./ttmp/2025/12/28/001-PORT-TO-GO--port-tactician-javascript-to-go/scripts/01-run-smoke-test.sh`
+
+### What worked
+- `goals` and `graph` now show a real dependency edge:
+  - `requirements_document --> technical_specification`
+- `history` now shows string values for `details` and `tactic_id` (no pointer addresses).
+
+### What didn't work
+- `node delete requirements_document --force` printed:
+  - `Error: cannot delete requirements_document: it blocks 1 node(s) (use --force)`
+  even though `--force` was passed.
+- The script still finished with `FAILED=0`, which suggests either:
+  - the CLI is returning exit code 0 even when printing an error, or
+  - the error is being written but not treated as a process error.
+
+### What I learned
+- We should treat “flag not applied” and “exit code not propagated” as separate hypotheses and validate both before changing behavior.
+
+### What warrants a second pair of eyes
+- Confirm expected contract for `node delete --force`:
+  - must delete even when blocking, and must return non-zero on failure.
+
+### Technical details
+- Smoke run kept temp directory:
+  - `WORK=/tmp/tmp.NYGqtiN5yl`
+
+---
+
 ## Step 1: Initial Analysis and Documentation Setup
 
 This step established the foundation for the port by creating the ticket workspace, analyzing the JavaScript codebase, and creating comprehensive documentation mapping all commands and flags to Go implementation patterns.
