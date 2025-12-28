@@ -197,3 +197,54 @@ This step turned the analysis into a compilable Go “shape”: a real `tacticia
 
 ### What I'd do differently next time
 - Add a tiny “smoke help” check (e.g. `go run ./cmd/tactician --help`) as a lightweight validation step alongside `go test`.
+
+---
+
+## Step 3: Add shared “project DB paths” schema section
+
+This step introduced the first reusable schema building block: a dedicated schema section that provides the default paths to `project.db` and `tactics.db`, while allowing overrides via flags/env/config. It’s intentionally small, but it unlocks consistent DB configuration across *all* commands before the real DB layer lands.
+
+**Commit (code):** aabc655a3bd117d16fcdfdb405c0bf0d7b0dd0f1 — "Add shared project DB path schema section"
+
+### What I did
+- Added `pkg/commands/sections/project.go`:
+  - `project-db-path` default `.tactician/project.db`
+  - `tactics-db-path` default `.tactician/tactics.db`
+- Threaded the new section into every command schema so the flags exist everywhere from day one.
+- Verified everything still compiles via `cd tactician && go test ./...`.
+
+### Why
+- These paths are cross-cutting configuration; implementing them once avoids drift and makes later DB work cleaner.
+- Putting the flags into all commands early avoids breaking changes later when users start relying on CLI/env overrides.
+
+### What worked
+- Adding a new section is low-friction with the wrapper packages (`schema.NewSection`, `fields.New`).
+- The section composes cleanly with `schema.NewGlazedSchema()` and the default argument/flag sections.
+
+### What didn't work
+- N/A.
+
+### What I learned
+- Keeping the exact parameter names (`project-db-path`, `tactics-db-path`) avoids double-prefix ambiguity and makes the CLI intent obvious.
+
+### What was tricky to build
+- Choosing names vs prefixing: it’s easy to accidentally create confusing flag names by combining a section prefix with already-prefixed field names.
+
+### What warrants a second pair of eyes
+- Confirm the parameter naming contract is what we want long-term: `--project-db-path` and `--tactics-db-path` for every command.
+
+### What should be done in the future
+- Start decoding `sections.ProjectSettings` in commands and use it to open DB connections (project + tactics).
+- Consider whether we want a third knob for the base `.tactician/` directory or keep explicit DB paths only.
+
+### Code review instructions
+- Start at `pkg/commands/sections/project.go`, then spot-check a couple command constructors to confirm section ordering.
+- Validate with:
+  - `cd tactician && go test ./...`
+
+### Technical details
+- Section slug: `project`
+- Field names (and thus CLI flags): `project-db-path`, `tactics-db-path`
+
+### What I'd do differently next time
+- Add a quick help snapshot for one command (e.g. `go run ./cmd/tactician graph --help`) to sanity-check how the flags render to users.
