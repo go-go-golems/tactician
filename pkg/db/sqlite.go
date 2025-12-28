@@ -27,6 +27,12 @@ func openSQLite(ctx context.Context, path string) (*sql.DB, error) {
 		return nil, errors.Wrap(err, "set journal_mode=WAL")
 	}
 
+	// Enable foreign key enforcement so ON DELETE CASCADE works.
+	if _, err := db.ExecContext(ctx, "PRAGMA foreign_keys = ON;"); err != nil {
+		_ = db.Close()
+		return nil, errors.Wrap(err, "enable foreign_keys")
+	}
+
 	return db, nil
 }
 
