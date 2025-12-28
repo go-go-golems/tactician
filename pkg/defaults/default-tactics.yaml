@@ -1,0 +1,571 @@
+# Tactician Default Tactics Library
+# This file contains a comprehensive set of reusable tactics for software projects
+
+# ============================================================================
+# PLANNING & REQUIREMENTS
+# ============================================================================
+
+- id: gather_requirements
+  type: team_activity
+  output: requirements_document
+  match: []
+  tags: [planning, requirements, documentation]
+  description: Meet with stakeholders to gather and document project requirements
+
+- id: write_technical_spec
+  type: document
+  output: technical_specification
+  match: [requirements_document]
+  tags: [planning, specification, architecture]
+  description: Write detailed technical specification based on requirements
+
+- id: create_project_roadmap
+  type: planning
+  output: project_roadmap
+  match: [requirements_document]
+  tags: [planning, timeline, milestones]
+  description: Create project timeline with milestones and deliverables
+
+- id: define_success_metrics
+  type: planning
+  output: success_metrics
+  match: [requirements_document]
+  tags: [planning, metrics, kpis]
+  description: Define measurable success criteria and KPIs
+
+# ============================================================================
+# ARCHITECTURE & DESIGN
+# ============================================================================
+
+- id: design_architecture
+  type: team_activity
+  output: architecture_document
+  match: [technical_specification]
+  tags: [architecture, design, system-design]
+  description: Design high-level system architecture and component interactions
+
+- id: design_data_model
+  type: team_activity
+  output: data_model
+  match: [requirements_document]
+  tags: [design, database, data-modeling]
+  description: Design database schema and data structures
+
+- id: design_api
+  type: team_activity
+  output: api_specification
+  match: [technical_specification]
+  tags: [design, api, rest, specification]
+  description: Design REST API endpoints, request/response schemas, and contracts
+
+- id: design_ui_wireframes
+  type: design
+  output: ui_wireframes
+  match: [requirements_document]
+  tags: [design, ui, wireframes, mockups]
+  description: Create wireframes and mockups for user interface
+
+- id: design_component_architecture
+  type: design
+  output: component_architecture
+  match: [technical_specification]
+  tags: [design, frontend, components, architecture]
+  description: Design frontend component hierarchy and state management
+
+- id: design_microservices
+  type: architecture
+  output: microservices_architecture
+  match: [technical_specification, data_model]
+  tags: [architecture, microservices, distributed-systems]
+  description: Design microservices boundaries and communication patterns
+
+# ============================================================================
+# BACKEND DEVELOPMENT
+# ============================================================================
+
+- id: setup_backend_project
+  type: software_implementation
+  output: backend_project_structure
+  match: []
+  tags: [backend, setup, boilerplate]
+  description: Initialize backend project with framework, dependencies, and folder structure
+
+- id: implement_database_schema
+  type: software_implementation
+  output: database_schema_code
+  match: [data_model]
+  tags: [backend, database, migrations, orm]
+  description: Implement database migrations and ORM models
+
+- id: implement_authentication
+  type: software_implementation
+  output: authentication_system
+  match: [api_specification]
+  tags: [backend, security, auth, jwt]
+  description: Implement user authentication and authorization system
+
+- id: implement_crud_endpoints
+  type: llm_coding_strategy
+  output: api_code
+  match: [api_specification, data_model]
+  premises: [data_model]
+  tags: [backend, api, crud, llm-assisted]
+  description: Implement CRUD endpoints with analysis and tests
+  data:
+    model: claude-sonnet-4-5-20250929
+    references:
+      - path: /docs/api-conventions.md
+        purpose: REST conventions and error handling
+      - path: /src/middleware/auth.ts
+        purpose: authentication patterns
+    subtasks:
+      - id: endpoints_analysis
+        type: analysis
+        output: endpoints_analysis
+        depends_on: []
+        data:
+          estimated_tokens: 2500
+          prompts:
+            - role: system
+              content: |
+                You are analyzing API requirements for CRUD endpoints.
+                Identify operations, schemas, validation rules.
+            - role: user
+              template: |
+                API Spec: {{api_specification}}
+                Data Model: {{data_model}}
+                
+                Document:
+                1. CRUD operations needed
+                2. Request/response schemas
+                3. Validation rules
+                4. Authorization requirements
+      - id: api_code
+        type: implementation
+        output: api_code
+        depends_on: [endpoints_analysis]
+        data:
+          estimated_tokens: 7000
+          prompts:
+            - role: system
+              content: |
+                Implement CRUD endpoints following conventions.
+                Include validation and error handling.
+            - role: user
+              template: |
+                Based on: {{endpoints_analysis}}
+                
+                Implement:
+                - Route definitions
+                - Controller methods
+                - Request validation
+                - Error handling
+      - id: endpoint_tests
+        type: testing
+        output: endpoint_tests
+        depends_on: [api_code]
+        data:
+          estimated_tokens: 4000
+          prompts:
+            - role: user
+              template: |
+                Write integration tests for: {{api_code}}
+                Cover success and error cases
+
+- id: implement_business_logic
+  type: software_implementation
+  output: business_logic_code
+  match: [technical_specification, data_model]
+  tags: [backend, business-logic, services]
+  description: Implement core business logic and service layer
+
+- id: implement_api_middleware
+  type: software_implementation
+  output: middleware_code
+  match: [api_specification]
+  tags: [backend, middleware, error-handling]
+  description: Implement API middleware for logging, error handling, and validation
+
+- id: implement_background_jobs
+  type: software_implementation
+  output: background_jobs_code
+  match: [technical_specification]
+  tags: [backend, jobs, workers, async]
+  description: Implement background job processing and task queue
+
+# ============================================================================
+# FRONTEND DEVELOPMENT
+# ============================================================================
+
+- id: setup_frontend_project
+  type: software_implementation
+  output: frontend_project_structure
+  match: []
+  tags: [frontend, setup, react, boilerplate]
+  description: Initialize frontend project with React, TypeScript, and build tools
+
+- id: implement_react_screens
+  type: llm_coding_strategy
+  output: frontend_code
+  match: [component_architecture, api_specification]
+  premises: [react_guidelines_doc, api_examples]
+  tags: [react, frontend, llm-assisted, multi-stage]
+  description: Multi-stage workflow for React screen implementation
+  data:
+    model: claude-sonnet-4-5-20250929
+    references:
+      - path: /docs/react-guidelines.md
+        purpose: component patterns
+      - path: /examples/api-calls/
+        purpose: API integration examples
+    subtasks:
+      - id: analyze_context_for_screens
+        type: analysis
+        output: react_screens_analysis
+        depends_on: []
+        data:
+          estimated_tokens: 3000
+          prompts:
+            - role: system
+              content: |
+                You are analyzing requirements for React screen implementation.
+                Review the provided references and identify relevant patterns.
+            - role: user
+              template: |
+                Given:
+                - Component Architecture: {{component_architecture}}
+                - API spec: {{api_specification}}
+                
+                Create an analysis document covering:
+                1. Relevant API endpoints
+                2. Existing components to reuse
+                3. New components needed
+                4. State management strategy
+      - id: design_react_components
+        type: design
+        output: react_component_design
+        depends_on: [react_screens_analysis]
+        data:
+          estimated_tokens: 4000
+          prompts:
+            - role: system
+              content: |
+                You are designing React components based on analysis.
+                Create detailed design specifications.
+            - role: user
+              template: |
+                Using: {{react_screens_analysis}}
+                
+                Design:
+                1. Component tree
+                2. Prop definitions with TypeScript
+                3. State management approach
+                4. Side effects placement
+      - id: user_review_checkpoint
+        type: human_review
+        output: review_approval
+        depends_on: [react_component_design, react_screens_analysis]
+        blocking: true
+        data:
+          prompt_to_user: |
+            Please review:
+            - Analysis: {{react_screens_analysis}}
+            - Design: {{react_component_design}}
+            
+            Approve to continue or provide feedback.
+      - id: implement_components
+        type: implementation
+        output: frontend_code
+        depends_on: [review_approval, react_component_design]
+        data:
+          estimated_tokens: 8000
+          prompts:
+            - role: system
+              content: |
+                Implement React components following the approved design.
+                Use TypeScript and follow guidelines.
+            - role: user
+              template: |
+                Implement based on: {{react_component_design}}
+                
+                Create:
+                - Components (src/components/*)
+                - State management
+                - Tests
+
+- id: implement_state_management
+  type: software_implementation
+  output: state_management_code
+  match: [component_architecture]
+  tags: [frontend, state, redux, zustand]
+  description: Implement global state management with Redux or Zustand
+
+- id: implement_api_client
+  type: software_implementation
+  output: api_client_code
+  match: [api_specification]
+  tags: [frontend, api, http, fetch]
+  description: Implement API client with request/response handling
+
+- id: implement_ui_components
+  type: software_implementation
+  output: ui_components_code
+  match: [ui_wireframes]
+  tags: [frontend, ui, components, styling]
+  description: Implement reusable UI components based on design system
+
+- id: implement_routing
+  type: software_implementation
+  output: routing_code
+  match: [component_architecture]
+  tags: [frontend, routing, navigation]
+  description: Implement client-side routing and navigation
+
+- id: implement_forms
+  type: software_implementation
+  output: forms_code
+  match: [ui_wireframes, api_specification]
+  tags: [frontend, forms, validation]
+  description: Implement forms with validation and error handling
+
+# ============================================================================
+# TESTING
+# ============================================================================
+
+- id: write_unit_tests
+  type: testing
+  output: unit_tests
+  match: [business_logic_code]
+  tags: [testing, unit-tests, jest]
+  description: Write unit tests for business logic and utilities
+
+- id: write_integration_tests
+  type: testing
+  output: integration_tests
+  match: [api_code]
+  tags: [testing, integration-tests, api-tests]
+  description: Write integration tests for API endpoints
+
+- id: write_e2e_tests
+  type: testing
+  output: e2e_tests
+  match: [frontend_code]
+  tags: [testing, e2e, cypress, playwright]
+  description: Write end-to-end tests for critical user flows
+
+- id: setup_test_infrastructure
+  type: testing
+  output: test_infrastructure
+  match: []
+  tags: [testing, ci, infrastructure]
+  description: Set up test runners, coverage tools, and CI integration
+
+- id: write_performance_tests
+  type: testing
+  output: performance_tests
+  match: [api_code]
+  tags: [testing, performance, load-testing]
+  description: Write performance and load tests
+
+# ============================================================================
+# DEVOPS & INFRASTRUCTURE
+# ============================================================================
+
+- id: setup_ci_cd
+  type: devops
+  output: ci_cd_pipeline
+  match: []
+  tags: [devops, ci-cd, github-actions, deployment]
+  description: Set up continuous integration and deployment pipeline
+
+- id: setup_docker
+  type: devops
+  output: docker_configuration
+  match: [backend_project_structure]
+  tags: [devops, docker, containers]
+  description: Create Dockerfiles and docker-compose configuration
+
+- id: setup_kubernetes
+  type: devops
+  output: kubernetes_manifests
+  match: [docker_configuration]
+  tags: [devops, kubernetes, k8s, orchestration]
+  description: Create Kubernetes manifests for deployment
+
+- id: setup_monitoring
+  type: devops
+  output: monitoring_setup
+  match: []
+  tags: [devops, monitoring, observability, logging]
+  description: Set up monitoring, logging, and alerting infrastructure
+
+- id: setup_database_backups
+  type: devops
+  output: backup_strategy
+  match: [database_schema_code]
+  tags: [devops, database, backups, disaster-recovery]
+  description: Implement database backup and recovery procedures
+
+# ============================================================================
+# DOCUMENTATION
+# ============================================================================
+
+- id: write_api_documentation
+  type: document
+  output: api_documentation
+  match: [api_specification]
+  tags: [documentation, api, openapi, swagger]
+  description: Write comprehensive API documentation with examples
+
+- id: write_user_guide
+  type: document
+  output: user_guide
+  match: [frontend_code]
+  tags: [documentation, user-guide, manual]
+  description: Write end-user documentation and guides
+
+- id: write_developer_guide
+  type: document
+  output: developer_guide
+  match: [architecture_document]
+  tags: [documentation, developer-guide, onboarding]
+  description: Write developer onboarding and contribution guide
+
+- id: write_deployment_guide
+  type: document
+  output: deployment_guide
+  match: [ci_cd_pipeline]
+  tags: [documentation, deployment, operations]
+  description: Write deployment and operations documentation
+
+# ============================================================================
+# SECURITY & COMPLIANCE
+# ============================================================================
+
+- id: security_audit
+  type: security
+  output: security_audit_report
+  match: [api_code, frontend_code]
+  tags: [security, audit, vulnerability-scan]
+  description: Conduct security audit and vulnerability assessment
+
+- id: implement_rate_limiting
+  type: software_implementation
+  output: rate_limiting_code
+  match: [api_specification]
+  tags: [security, rate-limiting, ddos-protection]
+  description: Implement API rate limiting and throttling
+
+- id: implement_input_sanitization
+  type: software_implementation
+  output: sanitization_code
+  match: [api_code]
+  tags: [security, validation, xss-prevention]
+  description: Implement input sanitization and validation
+
+- id: setup_ssl_certificates
+  type: devops
+  output: ssl_configuration
+  match: []
+  tags: [security, ssl, https, certificates]
+  description: Set up SSL/TLS certificates and HTTPS configuration
+
+# ============================================================================
+# DATA & ANALYTICS
+# ============================================================================
+
+- id: implement_analytics
+  type: software_implementation
+  output: analytics_code
+  match: [frontend_code]
+  tags: [analytics, tracking, metrics]
+  description: Implement user analytics and event tracking
+
+- id: setup_data_pipeline
+  type: data_engineering
+  output: data_pipeline
+  match: [data_model]
+  tags: [data, etl, pipeline]
+  description: Set up data pipeline for ETL and analytics
+
+- id: implement_reporting
+  type: software_implementation
+  output: reporting_system
+  match: [data_model]
+  tags: [reporting, dashboards, business-intelligence]
+  description: Implement reporting and dashboard system
+
+# ============================================================================
+# MOBILE
+# ============================================================================
+
+- id: setup_mobile_project
+  type: software_implementation
+  output: mobile_project_structure
+  match: []
+  tags: [mobile, react-native, ios, android]
+  description: Initialize mobile app project with React Native
+
+- id: implement_mobile_screens
+  type: software_implementation
+  output: mobile_screens_code
+  match: [ui_wireframes, api_specification]
+  tags: [mobile, react-native, ui]
+  description: Implement mobile app screens and navigation
+
+- id: implement_push_notifications
+  type: software_implementation
+  output: push_notifications_code
+  match: [mobile_project_structure]
+  tags: [mobile, notifications, firebase]
+  description: Implement push notification system
+
+# ============================================================================
+# OPTIMIZATION
+# ============================================================================
+
+- id: optimize_database_queries
+  type: optimization
+  output: query_optimization_report
+  match: [database_schema_code, api_code]
+  tags: [optimization, database, performance]
+  description: Analyze and optimize database queries and indexes
+
+- id: optimize_frontend_bundle
+  type: optimization
+  output: bundle_optimization
+  match: [frontend_code]
+  tags: [optimization, frontend, webpack, performance]
+  description: Optimize frontend bundle size and loading performance
+
+- id: implement_caching
+  type: software_implementation
+  output: caching_layer
+  match: [api_code]
+  tags: [optimization, caching, redis, performance]
+  description: Implement caching layer for API responses
+
+# ============================================================================
+# MAINTENANCE
+# ============================================================================
+
+- id: refactor_codebase
+  type: maintenance
+  output: refactored_code
+  match: [api_code]
+  tags: [maintenance, refactoring, code-quality]
+  description: Refactor code for better maintainability and readability
+
+- id: update_dependencies
+  type: maintenance
+  output: dependency_updates
+  match: []
+  tags: [maintenance, dependencies, security-updates]
+  description: Update project dependencies and fix security vulnerabilities
+
+- id: fix_technical_debt
+  type: maintenance
+  output: technical_debt_fixes
+  match: []
+  tags: [maintenance, technical-debt, cleanup]
+  description: Address accumulated technical debt and code smells

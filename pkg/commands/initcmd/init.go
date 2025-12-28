@@ -7,8 +7,11 @@ import (
 	"github.com/go-go-golems/glazed/pkg/cmds/schema"
 	"github.com/go-go-golems/glazed/pkg/cmds/values"
 	"github.com/go-go-golems/tactician/pkg/commands/sections"
+	"github.com/go-go-golems/tactician/pkg/db"
+	"github.com/go-go-golems/tactician/pkg/defaults"
 	"github.com/go-go-golems/tactician/pkg/store"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 )
 
 type InitCommand struct {
@@ -47,7 +50,14 @@ func (c *InitCommand) Run(ctx context.Context, vals *values.Values) error {
 		return err
 	}
 
-	// TODO(manuel): Import default tactics into .tactician/tactics/ (one file per tactic).
+	var tactics []*db.Tactic
+	if err := yaml.Unmarshal(defaults.DefaultTacticsYAML, &tactics); err != nil {
+		return errors.Wrap(err, "parse embedded default tactics")
+	}
+	if err := store.SeedTacticsIfMissing(settings.Dir, tactics); err != nil {
+		return err
+	}
+
 	// TODO(manuel): Optionally set project metadata (name/root_goal).
 	return nil
 }

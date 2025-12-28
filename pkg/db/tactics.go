@@ -125,7 +125,50 @@ VALUES (?, ?, ?)
 		}
 	}
 
-	if len(tactic.Subtasks) > 0 {
+	// Add subtasks (JS supports both top-level subtasks and data.subtasks)
+	subtasks := tactic.Subtasks
+	if len(subtasks) == 0 && tactic.Data != nil {
+		if raw, ok := tactic.Data["subtasks"]; ok {
+			if arr, ok := raw.([]interface{}); ok {
+				for _, item := range arr {
+					m, ok := item.(map[string]interface{})
+					if !ok {
+						continue
+					}
+					st := TacticSubtask{}
+					if v, ok := m["id"].(string); ok {
+						st.ID = v
+					}
+					if v, ok := m["output"].(string); ok {
+						st.Output = v
+					}
+					if v, ok := m["type"].(string); ok {
+						st.Type = v
+					}
+					if v, ok := m["depends_on"]; ok {
+						switch vv := v.(type) {
+						case []interface{}:
+							for _, x := range vv {
+								if s, ok := x.(string); ok {
+									st.DependsOn = append(st.DependsOn, s)
+								}
+							}
+						case []string:
+							st.DependsOn = append(st.DependsOn, vv...)
+						}
+					}
+					if v, ok := m["data"].(map[string]interface{}); ok {
+						st.Data = v
+					}
+					if st.ID != "" {
+						subtasks = append(subtasks, st)
+					}
+				}
+			}
+		}
+	}
+
+	if len(subtasks) > 0 {
 		subStmt, err := tx.PrepareContext(ctx, `
 INSERT INTO tactic_subtasks (tactic_id, subtask_id, output, type, depends_on, data)
 VALUES (?, ?, ?, ?, ?, ?)
@@ -135,7 +178,7 @@ VALUES (?, ?, ?, ?, ?, ?)
 		}
 		defer func() { _ = subStmt.Close() }()
 
-		for _, st := range tactic.Subtasks {
+		for _, st := range subtasks {
 			var dependsOn *string
 			if len(st.DependsOn) > 0 {
 				s := strings.Join(st.DependsOn, ",")

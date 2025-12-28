@@ -115,3 +115,28 @@ func writeTacticsDir(tacticianDir string, tactics []*db.Tactic) error {
 
 	return nil
 }
+
+// SeedTacticsIfMissing writes tactics to `.tactician/tactics/<id>.yaml` only if the file doesn't exist yet.
+func SeedTacticsIfMissing(tacticianDir string, tactics []*db.Tactic) error {
+	dir := tacticsDirPath(tacticianDir)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return errors.Wrap(err, "mkdir tactics dir")
+	}
+
+	for _, t := range tactics {
+		if t == nil || t.ID == "" {
+			continue
+		}
+		p := filepath.Join(dir, t.ID+".yaml")
+		if _, err := os.Stat(p); err == nil {
+			continue
+		} else if !os.IsNotExist(err) {
+			return errors.Wrap(err, "stat tactic file")
+		}
+		if err := writeTacticFile(tacticianDir, t); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
