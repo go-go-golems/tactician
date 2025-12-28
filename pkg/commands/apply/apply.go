@@ -206,11 +206,11 @@ func (c *ApplyCommand) Run(ctx context.Context, vals *values.Values) error {
 		}
 	}
 
-	// Edges from satisfied match dependencies to new nodes
-	for _, depOutput := range deps.Satisfied {
-		if !contains(tactic.Match, depOutput) {
-			continue
-		}
+	// Edges from match dependencies to created nodes.
+	//
+	// NOTE: "Satisfied" vs "missing" is about completion; the dependency edge should still exist
+	// when the dependency node exists but is not complete (so downstream nodes show as blocked).
+	for _, depOutput := range tactic.Match {
 		source := findNodeByOutput(allNodes, depOutput)
 		if source == nil {
 			continue
