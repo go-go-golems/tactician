@@ -16,7 +16,7 @@ type NodeAddCommand struct {
 }
 
 func NewNodeAddCommand() (*NodeAddCommand, error) {
-	projectSection, err := sections.NewProjectSection()
+	tacticianSection, err := sections.NewTacticianSection()
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func NewNodeAddCommand() (*NodeAddCommand, error) {
 		return nil, err
 	}
 
-	s := schema.NewSchema(schema.WithSections(projectSection, defaultSection))
+	s := schema.NewSchema(schema.WithSections(tacticianSection, defaultSection))
 
 	cmdDef := cmds.NewCommandDefinition(
 		"add",

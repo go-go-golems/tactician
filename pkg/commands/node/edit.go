@@ -16,7 +16,7 @@ type NodeEditCommand struct {
 }
 
 func NewNodeEditCommand() (*NodeEditCommand, error) {
-	projectSection, err := sections.NewProjectSection()
+	tacticianSection, err := sections.NewTacticianSection()
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func NewNodeEditCommand() (*NodeEditCommand, error) {
 		return nil, err
 	}
 
-	s := schema.NewSchema(schema.WithSections(projectSection, defaultSection))
+	s := schema.NewSchema(schema.WithSections(tacticianSection, defaultSection))
 
 	cmdDef := cmds.NewCommandDefinition(
 		"edit",

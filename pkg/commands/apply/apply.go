@@ -16,7 +16,7 @@ type ApplyCommand struct {
 }
 
 func NewApplyCommand() (*ApplyCommand, error) {
-	projectSection, err := sections.NewProjectSection()
+	tacticianSection, err := sections.NewTacticianSection()
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func NewApplyCommand() (*ApplyCommand, error) {
 		return nil, err
 	}
 
-	s := schema.NewSchema(schema.WithSections(projectSection, defaultSection))
+	s := schema.NewSchema(schema.WithSections(tacticianSection, defaultSection))
 
 	cmdDef := cmds.NewCommandDefinition(
 		"apply",

@@ -22,7 +22,7 @@ func NewHistoryCommand() (*HistoryCommand, error) {
 		return nil, err
 	}
 
-	projectSection, err := sections.NewProjectSection()
+	tacticianSection, err := sections.NewTacticianSection()
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func NewHistoryCommand() (*HistoryCommand, error) {
 		return nil, err
 	}
 
-	s := schema.NewSchema(schema.WithSections(glazedSection, projectSection, defaultSection))
+	s := schema.NewSchema(schema.WithSections(glazedSection, tacticianSection, defaultSection))
 
 	cmdDef := cmds.NewCommandDefinition(
 		"history",

@@ -15,13 +15,13 @@ type InitCommand struct {
 }
 
 func NewInitCommand() (*InitCommand, error) {
-	projectSection, err := sections.NewProjectSection()
+	tacticianSection, err := sections.NewTacticianSection()
 	if err != nil {
 		return nil, err
 	}
 
 	s := schema.NewSchema(
-		schema.WithSections(projectSection),
+		schema.WithSections(tacticianSection),
 	)
 
 	cmdDef := cmds.NewCommandDefinition(
