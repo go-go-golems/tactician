@@ -9,35 +9,35 @@
 
 ### Pivot: YAML as source of truth + in-memory SQLite runtime (NO disk DB)
 
-- [ ] Replace DB-path flags with `.tactician/` storage settings:
-  - [ ] New section: `--tactician-dir` (default: `.tactician`)
-  - [ ] Remove/stop using `--project-db-path` and `--tactics-db-path`
-- [ ] Define YAML on-disk layout (initially):
-  - [ ] `.tactician/project.yaml`
-  - [ ] `.tactician/action-log.yaml` (append-only or regenerated)
-  - [ ] `.tactician/tactics/<tactic-id>.yaml` (one file per tactic)
-- [ ] Implement `pkg/store` (or `pkg/state`) orchestrator:
-  - [ ] Load: read YAML from `.tactician/`, create in-memory sqlite, init schema, import YAML → sqlite
-  - [ ] Save (mutating commands only): export sqlite → YAML (stable/canonical output)
-- [ ] Refactor DB wrappers to accept a provided `*sql.DB` (in-memory) rather than owning `sql.Open` by file path.
-- [ ] Implement TacticsDB wrapper + one-file-per-tactic import/export.
+- [x] Replace DB-path flags with `.tactician/` storage settings:
+  - [x] New section: `--tactician-dir` (default: `.tactician`)
+  - [x] Remove/stop using `--project-db-path` and `--tactics-db-path`
+- [x] Define YAML on-disk layout (initially):
+  - [x] `.tactician/project.yaml`
+  - [x] `.tactician/action-log.yaml` (currently regenerated on save, newest-first)
+  - [x] `.tactician/tactics/<tactic-id>.yaml` (one file per tactic)
+- [x] Implement `pkg/store` orchestrator:
+  - [x] Load: read YAML from `.tactician/`, create in-memory sqlite, init schema, import YAML → sqlite
+  - [x] Save (mutating commands only): export sqlite → YAML (stable/canonical output)
+- [x] Refactor DB wrappers to accept a provided `*sql.DB` (in-memory) rather than owning `sql.Open` by file path (implemented via constructors that accept `*sql.DB`)
+- [x] Implement TacticsDB wrapper + one-file-per-tactic import/export.
 
 ### Command implementations (using store)
 
-- [ ] `init`: create `.tactician/` YAML structure, import default tactics, write initial YAML (no sqlite on disk)
-- [ ] `node show`: read-only; load state → query → glazed output (batch node IDs)
-- [ ] `node add`: mutating; load state → insert node → log action → save YAML
-- [ ] `node edit`: mutating; load state → update statuses (batch) → log action(s) → save YAML
-- [ ] `node delete`: mutating; load state → enforce blocks unless --force → delete → log → save YAML
-- [ ] `graph`: read-only; load state → query edges/nodes → output (table + optional mermaid)
-- [ ] `goals`: read-only; load state → compute pending/blocked → output (table + optional mermaid)
-- [ ] `history`: read-only; load state → query action log → output (with summary option)
-- [ ] `search`: read-only; load state → rank/filter tactics → output
-- [ ] `apply`: mutating; load state → dependency check → create nodes/edges → log → save YAML
+- [x] `init`: create `.tactician/` YAML structure, import default tactics, write initial YAML (no sqlite on disk)
+- [x] `node show`: read-only; load state → query → glazed output (batch node IDs)
+- [x] `node add`: mutating; load state → insert node → log action → save YAML
+- [x] `node edit`: mutating; load state → update statuses (batch) → log action(s) → save YAML
+- [x] `node delete`: mutating; load state → enforce blocks unless --force → delete → log → save YAML
+- [x] `graph`: read-only; load state → query edges/nodes → output (table + optional mermaid; mermaid currently basic)
+- [x] `goals`: read-only; load state → compute pending/blocked → output (table + optional mermaid)
+- [x] `history`: read-only; load state → query action log → output (with summary option, relative time)
+- [x] `search`: read-only; load state → rank/filter tactics → output (LLM rerank not implemented)
+- [x] `apply`: mutating; load state → dependency check → create nodes/edges → log → save YAML (requires --yes; non-interactive)
 
 ### Helpers + tests
 
-- [ ] Implement helper functions: `computeNodeStatus()`, `getPendingNodes()`, `parseRelativeTime()`, `rankTactics()`, `checkDependencies()` matching JavaScript logic
+- [x] Implement helper logic (inline in commands for now): status computation, relative time parsing, ranking, dependency checks
 - [ ] Add unit tests:
   - [ ] YAML ↔ sqlite roundtrip idempotence
   - [ ] DB query helpers
