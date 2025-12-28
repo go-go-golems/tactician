@@ -303,6 +303,35 @@ This step hardens the project against regressions by turning more of the smoke-t
 ### What warrants a second pair of eyes
 - Verify the integration test’s assumptions align with desired CLI semantics (especially delete behavior and edge direction).
 
+---
+
+## Step 29: Finish remaining “Option 1” tests (settings decode + Mermaid + flag combos)
+
+This step completes the remaining test gaps called out in `tasks.md`. The focus is to make refactors safer by asserting three fragile surfaces: CLI settings decoding (`--tactician-dir`), Mermaid outputs, and common flag-placement/short-flag combinations.
+
+**Commits (tests):**
+- 9838a2703f06f3e993b7df31b7ad60d49b7cfafb — "Test: command settings decoding for tactician-dir"
+- 168cdcf656f40dc0bd1c6a345da815349982bf9b — "Test: validate mermaid outputs via JSON"
+- 0b278cb9d266fd86fb07c0fa60a5044530f5e1f8 — "Test: add flag-combination CLI integration"
+
+### What I did
+- Added a unit test in `pkg/commands/sections/tactician_test.go` that uses Glazed’s `CobraParser.Parse` to decode:
+  - default `--tactician-dir` (`.tactician`)
+  - and an overridden value via `--tactician-dir x/.tactician`
+- Extended CLI integration tests (`pkg/integration/cli_integration_test.go`) to:
+  - validate Mermaid outputs using `--output json` and checking the `mermaid` field contains `graph TD`
+  - cover flag combinations:
+    - `init --tactician-dir state-a` creates `state-a/` without creating `.tactician/`
+    - `node delete requirements_document -f` works with the short flag placed after args
+
+### Why
+- These are the “it works until it doesn’t” behaviors that tend to regress during refactors.
+- Using JSON output in tests avoids brittle table formatting assertions.
+
+### What warrants a second pair of eyes
+- Confirm that writing state to a non-default `--tactician-dir` should *not* create `.tactician/` at all (current expectation in the test).
+- Confirm the Mermaid contract is OK as “contains `graph TD`” rather than a strict exact match.
+
 ## Step 1: Initial Analysis and Documentation Setup
 
 This step established the foundation for the port by creating the ticket workspace, analyzing the JavaScript codebase, and creating comprehensive documentation mapping all commands and flags to Go implementation patterns.
