@@ -1,7 +1,7 @@
 ---
 Title: 'Search: LLM reranking'
 Ticket: 003-SEARCH-LLM-RERANK
-Status: active
+Status: review
 Topics:
     - tactician
     - go
@@ -28,10 +28,11 @@ RelatedFiles:
       Note: Integration harness to extend (conditional on OPENAI_API_KEY)
 ExternalSources: []
 Summary: ""
-LastUpdated: 2025-12-28T15:43:28.947555372-05:00
+LastUpdated: 2025-12-28T15:45:38.98587747-05:00
 WhatFor: ""
 WhenToUse: ""
 ---
+
 
 
 # Search: LLM reranking

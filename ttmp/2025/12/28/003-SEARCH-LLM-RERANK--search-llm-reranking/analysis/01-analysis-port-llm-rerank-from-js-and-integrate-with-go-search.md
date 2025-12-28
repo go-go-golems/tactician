@@ -11,24 +11,13 @@ Topics:
 DocType: analysis
 Intent: long-term
 Owners: []
-RelatedFiles:
-    - Path: js-version/tactician/src/llm/reranker.js
-      Note: Exact prompt and reorder semantics to port
-    - Path: pkg/commands/search/search.go
-      Note: Insertion point for rerank step
-    - Path: pkg/db/project.go
-      Note: Queries for nodes/status used by reranker context
-    - Path: pkg/db/tactics.go
-      Note: Tactic fields (id/type/output/description/tags/match/subtasks) used in prompt
-    - Path: pkg/store/state.go
-      Note: Project context source (nodes/status)
+RelatedFiles: []
 ExternalSources: []
 Summary: ""
 LastUpdated: 2025-12-28T15:43:29.023037904-05:00
-WhatFor: Document the JS reference implementation of LLM reranking and lay out an implementation path to add it to the Go `search` command with tests and a reproducible validation script.
-WhenToUse: When implementing `tactician search --llm-rerank` in Go and wanting a ready-to-execute checklist, code pointers, and behavioral parity notes.
+WhatFor: "Document the JS reference implementation of LLM reranking and lay out an implementation path to add it to the Go `search` command with tests and a reproducible validation script."
+WhenToUse: "When implementing `tactician search --llm-rerank` in Go and wanting a ready-to-execute checklist, code pointers, and behavioral parity notes."
 ---
-
 
 ## Goal
 

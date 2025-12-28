@@ -11,24 +11,13 @@ Topics:
 DocType: design
 Intent: long-term
 Owners: []
-RelatedFiles:
-    - Path: pkg/commands/apply/apply.go
-      Note: Apply note and instantiation metadata
-    - Path: pkg/commands/node/add.go
-      Note: Node add metadata flags + update behavior
-    - Path: pkg/db/project.go
-      Note: Node storage schema updates
-    - Path: pkg/store/disk_types.go
-      Note: YAML disk schema updates
-    - Path: ttmp/2025/12/28/001-PORT-TO-GO--port-tactician-javascript-to-go/scripts/04-walkthrough-export-mermaid.sh
-      Note: Existing reviewable Mermaid walkthrough script to compare outputs
+RelatedFiles: []
 ExternalSources: []
 Summary: ""
 LastUpdated: 2025-12-28T15:37:59.789307947-05:00
-WhatFor: Make DAG nodes more informative by adding title/description + instantiation note fields, and surface them in CLI output, Mermaid graphs, and action logs.
-WhenToUse: When implementing node metadata improvements and improving reviewability of Mermaid exports and history logs.
+WhatFor: "Make DAG nodes more informative by adding title/description + instantiation note fields, and surface them in CLI output, Mermaid graphs, and action logs."
+WhenToUse: "When implementing node metadata improvements and improving reviewability of Mermaid exports and history logs."
 ---
-
 
 ## Overview
 
