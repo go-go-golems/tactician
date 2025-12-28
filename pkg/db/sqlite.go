@@ -29,3 +29,11 @@ func openSQLite(ctx context.Context, path string) (*sql.DB, error) {
 
 	return db, nil
 }
+
+// OpenSQLiteMemory opens a shared in-memory sqlite database.
+// This is the only runtime mode we want for tactician: YAML on disk, sqlite in memory.
+func OpenSQLiteMemory(ctx context.Context) (*sql.DB, error) {
+	// "file::memory:?cache=shared" allows the driver to share an in-memory database across connections.
+	// We still treat the returned *sql.DB as a single handle for the process.
+	return openSQLite(ctx, "file::memory:?cache=shared")
+}

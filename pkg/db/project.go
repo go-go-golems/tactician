@@ -20,6 +20,10 @@ func NewProjectDB(dbPath string) *ProjectDB {
 	return &ProjectDB{DBPath: dbPath}
 }
 
+func NewProjectDBFromDB(db *sql.DB) *ProjectDB {
+	return &ProjectDB{db: db}
+}
+
 func (p *ProjectDB) Open(ctx context.Context) error {
 	if p.db != nil {
 		return nil
