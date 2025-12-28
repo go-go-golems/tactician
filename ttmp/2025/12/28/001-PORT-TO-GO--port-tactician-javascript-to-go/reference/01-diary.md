@@ -346,3 +346,29 @@ This step made the first concrete code change toward the YAML persistence model:
 
 ### What should be done in the future
 - Implement `pkg/store` that uses `tactician.dir` to load/save YAML around an in-memory SQLite DB.
+
+---
+
+## Step 8: Scaffold `pkg/store` (in-memory sqlite lifecycle)
+
+This step introduced the first slice of the new runtime architecture: a `store.State` that opens a shared in-memory SQLite database, initializes the project schema, and is intended to become the single entry point for commands to load/save YAML state. It doesn’t import/export YAML yet, but it establishes the lifecycle and the “only memory DB” contract in code.
+
+**Commit (code):** d25608a3983377514b436b4fafb445919c5d1078 — "Store: scaffold in-memory state loader"
+
+### What I did
+- Added `pkg/db.OpenSQLiteMemory(ctx)` to centralize “memory DB only” creation.
+- Added `db.NewProjectDBFromDB(*sql.DB)` to allow DB wrappers to run on an injected in-memory DB.
+- Added `pkg/store/state.go` with:
+  - `Load(ctx, tacticianDir)` → create in-memory sqlite + init schema
+  - `Save(ctx)` placeholder
+  - `Close()` for cleanup
+
+### Why
+- Commands should stop thinking in terms of “open DB file”, and instead depend on a unified load/save lifecycle tied to `.tactician/` YAML.
+
+### What warrants a second pair of eyes
+- Connection DSN choice (`file::memory:?cache=shared`) and whether we should enforce a single connection usage pattern.
+
+### What should be done in the future
+- Implement YAML import/export inside `Load`/`Save`.
+- Introduce `TacticsDB` and include it in `State`.
