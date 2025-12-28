@@ -8,12 +8,18 @@ import (
 	"github.com/go-go-golems/glazed/pkg/cmds/schema"
 	"github.com/go-go-golems/glazed/pkg/cmds/values"
 	"github.com/go-go-golems/glazed/pkg/middlewares"
+	"github.com/go-go-golems/glazed/pkg/types"
 	"github.com/go-go-golems/tactician/pkg/commands/sections"
+	"github.com/go-go-golems/tactician/pkg/store"
 	"github.com/pkg/errors"
 )
 
 type NodeShowCommand struct {
 	*cmds.CommandDefinition
+}
+
+type NodeShowSettings struct {
+	NodeIDs []string `glazed.parameter:"node-ids"`
 }
 
 func NewNodeShowCommand() (*NodeShowCommand, error) {
@@ -63,8 +69,49 @@ func (c *NodeShowCommand) RunIntoGlazeProcessor(
 	vals *values.Values,
 	gp middlewares.Processor,
 ) error {
-	_ = ctx
-	_ = vals
-	_ = gp
-	return errors.New("node show: not implemented yet")
+	tSettings := &sections.TacticianSettings{}
+	if err := values.DecodeSectionInto(vals, sections.TacticianSlug, tSettings); err != nil {
+		return errors.Wrap(err, "decode tactician settings")
+	}
+
+	settings := &NodeShowSettings{}
+	if err := values.DecodeSectionInto(vals, schema.DefaultSlug, settings); err != nil {
+		return errors.Wrap(err, "decode node show settings")
+	}
+	if len(settings.NodeIDs) == 0 {
+		return errors.New("at least one node id is required")
+	}
+
+	st, err := store.Load(ctx, tSettings.Dir)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = st.Close() }()
+
+	for _, id := range settings.NodeIDs {
+		n, err := st.Project.GetNode(ctx, id)
+		if err != nil {
+			return err
+		}
+		if n == nil {
+			return errors.Errorf("node not found: %s", id)
+		}
+
+		row := types.NewRow(
+			types.MRP("id", n.ID),
+			types.MRP("type", n.Type),
+			types.MRP("output", n.Output),
+			types.MRP("status", n.Status),
+			types.MRP("created_by", n.CreatedBy),
+			types.MRP("parent_tactic", n.ParentTactic),
+			types.MRP("introduced_as", n.IntroducedAs),
+			types.MRP("created_at", n.CreatedAt),
+			types.MRP("completed_at", n.CompletedAt),
+		)
+		if err := gp.AddRow(ctx, row); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

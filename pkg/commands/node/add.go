@@ -2,17 +2,27 @@ package node
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-go-golems/glazed/pkg/cmds"
 	"github.com/go-go-golems/glazed/pkg/cmds/fields"
 	"github.com/go-go-golems/glazed/pkg/cmds/schema"
 	"github.com/go-go-golems/glazed/pkg/cmds/values"
 	"github.com/go-go-golems/tactician/pkg/commands/sections"
+	"github.com/go-go-golems/tactician/pkg/db"
+	"github.com/go-go-golems/tactician/pkg/store"
 	"github.com/pkg/errors"
 )
 
 type NodeAddCommand struct {
 	*cmds.CommandDefinition
+}
+
+type NodeAddSettings struct {
+	NodeID string `glazed.parameter:"node-id"`
+	Output string `glazed.parameter:"output"`
+	Type   string `glazed.parameter:"type"`
+	Status string `glazed.parameter:"status"`
 }
 
 func NewNodeAddCommand() (*NodeAddCommand, error) {
@@ -65,7 +75,51 @@ func NewNodeAddCommand() (*NodeAddCommand, error) {
 var _ cmds.BareCommand = &NodeAddCommand{}
 
 func (c *NodeAddCommand) Run(ctx context.Context, vals *values.Values) error {
-	_ = ctx
-	_ = vals
-	return errors.New("node add: not implemented yet")
+	tSettings := &sections.TacticianSettings{}
+	if err := values.DecodeSectionInto(vals, sections.TacticianSlug, tSettings); err != nil {
+		return errors.Wrap(err, "decode tactician settings")
+	}
+
+	settings := &NodeAddSettings{}
+	if err := values.DecodeSectionInto(vals, schema.DefaultSlug, settings); err != nil {
+		return errors.Wrap(err, "decode node add settings")
+	}
+
+	st, err := store.Load(ctx, tSettings.Dir)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = st.Close() }()
+
+	existing, err := st.Project.GetNode(ctx, settings.NodeID)
+	if err != nil {
+		return err
+	}
+	if existing != nil {
+		return errors.Errorf("node already exists: %s", settings.NodeID)
+	}
+
+	node := &db.Node{
+		ID:     settings.NodeID,
+		Type:   settings.Type,
+		Output: settings.Output,
+		Status: settings.Status,
+	}
+	if node.Status == "complete" {
+		now := time.Now().UTC()
+		node.CompletedAt = &now
+	}
+
+	if err := st.Project.AddNode(ctx, node); err != nil {
+		return err
+	}
+
+	details := "Created node: " + settings.NodeID
+	nodeID := settings.NodeID
+	if err := st.Project.LogAction(ctx, "node_created", &details, &nodeID, nil); err != nil {
+		return err
+	}
+
+	st.Dirty = true
+	return st.Save(ctx)
 }

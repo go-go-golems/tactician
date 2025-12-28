@@ -8,11 +8,17 @@ import (
 	"github.com/go-go-golems/glazed/pkg/cmds/schema"
 	"github.com/go-go-golems/glazed/pkg/cmds/values"
 	"github.com/go-go-golems/tactician/pkg/commands/sections"
+	"github.com/go-go-golems/tactician/pkg/store"
 	"github.com/pkg/errors"
 )
 
 type NodeDeleteCommand struct {
 	*cmds.CommandDefinition
+}
+
+type NodeDeleteSettings struct {
+	NodeIDs []string `glazed.parameter:"node-ids"`
+	Force   bool     `glazed.parameter:"force"`
 }
 
 func NewNodeDeleteCommand() (*NodeDeleteCommand, error) {
@@ -58,7 +64,56 @@ func NewNodeDeleteCommand() (*NodeDeleteCommand, error) {
 var _ cmds.BareCommand = &NodeDeleteCommand{}
 
 func (c *NodeDeleteCommand) Run(ctx context.Context, vals *values.Values) error {
-	_ = ctx
-	_ = vals
-	return errors.New("node delete: not implemented yet")
+	tSettings := &sections.TacticianSettings{}
+	if err := values.DecodeSectionInto(vals, sections.TacticianSlug, tSettings); err != nil {
+		return errors.Wrap(err, "decode tactician settings")
+	}
+
+	settings := &NodeDeleteSettings{}
+	if err := values.DecodeSectionInto(vals, schema.DefaultSlug, settings); err != nil {
+		return errors.Wrap(err, "decode node delete settings")
+	}
+	if len(settings.NodeIDs) == 0 {
+		return errors.New("at least one node id is required")
+	}
+
+	st, err := store.Load(ctx, tSettings.Dir)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = st.Close() }()
+
+	// Validate
+	for _, id := range settings.NodeIDs {
+		n, err := st.Project.GetNode(ctx, id)
+		if err != nil {
+			return err
+		}
+		if n == nil {
+			return errors.Errorf("node not found: %s", id)
+		}
+		if !settings.Force {
+			blocks, err := st.Project.GetBlockedBy(ctx, id)
+			if err != nil {
+				return err
+			}
+			if len(blocks) > 0 {
+				return errors.Errorf("cannot delete %s: it blocks %d node(s) (use --force)", id, len(blocks))
+			}
+		}
+	}
+
+	for _, id := range settings.NodeIDs {
+		if err := st.Project.DeleteNode(ctx, id); err != nil {
+			return err
+		}
+		details := "Deleted node: " + id
+		nodeID := id
+		if err := st.Project.LogAction(ctx, "node_deleted", &details, &nodeID, nil); err != nil {
+			return err
+		}
+	}
+
+	st.Dirty = true
+	return st.Save(ctx)
 }
