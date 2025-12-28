@@ -17,6 +17,7 @@ type State struct {
 
 	SQL     *sql.DB
 	Project *db.ProjectDB
+	Tactics *db.TacticsDB
 
 	// TODO(manuel): Add TacticsDB once implemented.
 	Dirty bool
@@ -47,10 +48,17 @@ func Load(ctx context.Context, tacticianDir string) (*State, error) {
 		return nil, err
 	}
 
+	tacticsDB := db.NewTacticsDBFromDB(sqlDB)
+	if err := tacticsDB.InitSchema(ctx); err != nil {
+		_ = sqlDB.Close()
+		return nil, err
+	}
+
 	s := &State{
 		Dir:     tacticianDir,
 		SQL:     sqlDB,
 		Project: projectDB,
+		Tactics: tacticsDB,
 		Dirty:   false,
 	}
 
@@ -151,6 +159,21 @@ VALUES (?, ?, ?, ?, ?)
 		}
 	}
 
+	// Tactics (one file per tactic)
+	if _, err := os.Stat(tacticsDirPath(s.Dir)); err == nil {
+		tactics, err := readTacticsDir(s.Dir)
+		if err != nil {
+			return err
+		}
+		for _, t := range tactics {
+			if err := s.Tactics.AddTactic(ctx, t); err != nil {
+				return err
+			}
+		}
+	} else if !os.IsNotExist(err) {
+		return errors.Wrap(err, "stat tactics dir")
+	}
+
 	return nil
 }
 
@@ -231,6 +254,14 @@ func (s *State) exportToDisk(ctx context.Context) error {
 		})
 	}
 	if err := writeActionLogFile(s.Dir, outLog); err != nil {
+		return err
+	}
+
+	tactics, err := s.Tactics.GetAllTactics(ctx)
+	if err != nil {
+		return err
+	}
+	if err := writeTacticsDir(s.Dir, tactics); err != nil {
 		return err
 	}
 
