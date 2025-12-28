@@ -222,6 +222,35 @@ func (c *ApplyCommand) Run(ctx context.Context, vals *values.Values) error {
 		}
 	}
 
+	// Edges from premise dependencies to created nodes.
+	//
+	// Premises that exist (whether complete or not) should create edges, just like match.
+	// Premises that are being introduced (canIntroduce) are new nodes themselves, so skip those.
+	canIntroduceSet := make(map[string]bool)
+	for _, output := range deps.CanIntroduce {
+		canIntroduceSet[output] = true
+	}
+	for _, depOutput := range tactic.Premises {
+		// Skip if already handled as match dependency
+		if contains(tactic.Match, depOutput) {
+			continue
+		}
+		// Skip if being introduced (it's a new node itself)
+		if canIntroduceSet[depOutput] {
+			continue
+		}
+		// Create edges from existing premise nodes to new nodes
+		source := findNodeByOutput(allNodes, depOutput)
+		if source == nil {
+			continue
+		}
+		for _, newNode := range nodesToCreate {
+			if err := st.Project.AddEdge(ctx, source.ID, newNode.ID); err != nil {
+				return err
+			}
+		}
+	}
+
 	details := "Applied tactic: " + settings.TacticID
 	tid := settings.TacticID
 	if err := st.Project.LogAction(ctx, "tactic_applied", &details, nil, &tid); err != nil {
