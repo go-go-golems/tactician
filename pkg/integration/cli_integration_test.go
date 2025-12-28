@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -19,6 +20,30 @@ type projectYAML struct {
 		Source string `yaml:"source"`
 		Target string `yaml:"target"`
 	} `yaml:"edges"`
+}
+
+func decodeRowsJSON(t *testing.T, b []byte) []map[string]any {
+	t.Helper()
+
+	// Glazed typically emits JSON array for --output json. Be tolerant and also accept
+	// newline-delimited JSON objects as a fallback.
+	var arr []map[string]any
+	if err := json.Unmarshal(bytes.TrimSpace(b), &arr); err == nil {
+		return arr
+	}
+
+	dec := json.NewDecoder(bytes.NewReader(b))
+	for dec.More() {
+		var obj map[string]any
+		if err := dec.Decode(&obj); err != nil {
+			t.Fatalf("failed to decode json output:\n%s\nerr=%v", string(b), err)
+		}
+		arr = append(arr, obj)
+	}
+	if len(arr) == 0 {
+		t.Fatalf("expected at least one json row, got 0\noutput=\n%s", string(b))
+	}
+	return arr
 }
 
 func TestCLI_InitAddApply(t *testing.T) {
@@ -51,6 +76,16 @@ func TestCLI_InitAddApply(t *testing.T) {
 		if err := cmd.Run(); err != nil {
 			t.Fatalf("command failed: %v\nargs=%v\noutput=\n%s", err, args, buf.String())
 		}
+	}
+
+	runOut := func(args ...string) []byte {
+		cmd := exec.Command(bin, args...)
+		cmd.Dir = base
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("command failed: %v\nargs=%v\noutput=\n%s", err, args, string(out))
+		}
+		return out
 	}
 
 	runFail := func(args ...string) string {
@@ -124,6 +159,28 @@ func TestCLI_InitAddApply(t *testing.T) {
 		t.Fatalf("expected delete failure output to mention --force\noutput=\n%s", outStr)
 	}
 	run("node", "delete", "requirements_document", "--force")
+
+	// Mermaid output contract: should emit a single JSON row with a `mermaid` field containing "graph TD".
+	// (We use JSON output so this test doesn't depend on table formatting.)
+	graphJSON := runOut("graph", "--mermaid", "--output", "json")
+	rows := decodeRowsJSON(t, graphJSON)
+	if len(rows) != 1 {
+		t.Fatalf("expected exactly 1 mermaid row from graph --mermaid, got %d\noutput=\n%s", len(rows), string(graphJSON))
+	}
+	m, _ := rows[0]["mermaid"].(string)
+	if !bytes.Contains([]byte(m), []byte("graph TD")) {
+		t.Fatalf("expected graph mermaid output to contain \"graph TD\"\nmermaid=\n%s", m)
+	}
+
+	goalsJSON := runOut("goals", "--mermaid", "--output", "json")
+	rows2 := decodeRowsJSON(t, goalsJSON)
+	if len(rows2) != 1 {
+		t.Fatalf("expected exactly 1 mermaid row from goals --mermaid, got %d\noutput=\n%s", len(rows2), string(goalsJSON))
+	}
+	m2, _ := rows2[0]["mermaid"].(string)
+	if !bytes.Contains([]byte(m2), []byte("graph TD")) {
+		t.Fatalf("expected goals mermaid output to contain \"graph TD\"\nmermaid=\n%s", m2)
+	}
 }
 
 
