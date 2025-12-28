@@ -246,5 +246,3 @@ func TestCLI_FlagCombinations(t *testing.T) {
 	// Flags after args.
 	runInDir(dirB, "node", "delete", "requirements_document", "-f")
 }
-
-

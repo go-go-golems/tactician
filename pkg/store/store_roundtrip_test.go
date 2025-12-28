@@ -95,5 +95,3 @@ func TestRoundTrip_ProjectActionLogAndTactics(t *testing.T) {
 		t.Fatalf("expected action log entries after reload")
 	}
 }
-
-

@@ -87,5 +87,3 @@ func TestTacticianDir_DefaultAndOverride(t *testing.T) {
 		t.Fatalf("expected override Dir x/.tactician, got %q", tSettings2.Dir)
 	}
 }
-
-

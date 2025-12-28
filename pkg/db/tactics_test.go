@@ -57,5 +57,3 @@ func TestTacticsDB_AddTactic_SubtasksFromData(t *testing.T) {
 		t.Fatalf("expected depends_on [s0], got %#v", got.Subtasks[0].DependsOn)
 	}
 }
-
-
