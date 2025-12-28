@@ -70,6 +70,62 @@ This step turned the smoke test playbook into a single runnable bash script stor
 
 ---
 
+## Step 21: Run smoke test script; identify first correctness gaps
+
+This step actually ran the smoke test script and used the resulting `.tactician/` YAML to pinpoint correctness bugs worth addressing next. The good news is the CLI is broadly functional end-to-end; the bad news is a couple details are clearly wrong (history output and apply edge creation), and the final delete step in the playbook needs to be conditional because “unforced delete may succeed”.
+
+**Commit (ticket script):** 17379f962d5177ca34c88db000962df98d52425c — "Ticket: fix smoke test script to build binary"
+
+### What I did
+- Ran the ticket smoke script:
+  - `bash ttmp/.../scripts/01-run-smoke-test.sh`
+- Inspected the produced YAML under the kept temp directory.
+
+### What worked
+- `init`, `node add/show/edit`, `search`, `apply`, `goals`, `graph`, and `history` all executed without crashing.
+- `action-log.yaml` content looks correct on disk (strings, tactic IDs, etc.).
+
+### What didn't work
+- The script failed at the end because the node was already deleted:
+  - `node delete requirements_document` succeeded (unforced), so the subsequent `node delete requirements_document --force` returned `Error: node not found: requirements_document`.
+- `history` output printed pointer addresses (e.g. `0xc000...`) for `details` and `tactic_id` in table output, even though YAML had correct string values.
+- `apply write_technical_spec` did not create any dependency edges:
+  - `project.yaml` ended up with `edges: []` even though `write_technical_spec` has `match: [requirements_document]`.
+
+### What I learned
+- The smoke test’s delete step should be “try unforced delete; if it fails, then run forced delete”, not both unconditionally.
+- The action log serialization is fine; the bug is likely in the query scan/output row construction for `history`.
+- Edge creation during `apply` is currently missing (or being skipped on export), which affects readiness/blocked computations.
+
+### What was tricky to build
+- N/A (this step was mostly validation), but the biggest subtlety is that a “green-looking” CLI can still be semantically wrong unless we inspect edges/deps explicitly.
+
+### What warrants a second pair of eyes
+- Confirm intended semantics for `apply`: for satisfied `match` deps it must create edges from dep-node → created-node; if `--force` is used, should it still create edges for satisfied deps?
+- Confirm `node delete --force` behavior when node is absent: should it be idempotent (no-op) or remain an error?
+
+### What should be done in the future
+- Fix `history` output to emit actual strings (no pointer addresses).
+- Fix `apply` to persist dependency edges for `match` deps (and ensure they are exported).
+- Update the smoke script (or playbook) delete step to be conditional to avoid false failures.
+
+### Code review instructions
+- Start at:
+  - `pkg/commands/history/history.go` (row construction / scanning)
+  - `pkg/commands/apply/apply.go` (edge creation)
+  - `pkg/db/project.go` (edge insert + export)
+- Re-run:
+  - `bash ttmp/.../scripts/01-run-smoke-test.sh`
+
+### Technical details
+- Smoke run kept temp directory:
+  - `WORK=/tmp/tmp.fYxLJX3832`
+- Observed on disk:
+  - `.tactician/action-log.yaml` contains correct `details` and `tactic_id` strings.
+  - `.tactician/project.yaml` contains `edges: []`.
+
+---
+
 ## Step 1: Initial Analysis and Documentation Setup
 
 This step established the foundation for the port by creating the ticket workspace, analyzing the JavaScript codebase, and creating comprehensive documentation mapping all commands and flags to Go implementation patterns.
