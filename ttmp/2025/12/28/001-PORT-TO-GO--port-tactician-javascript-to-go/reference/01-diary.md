@@ -372,3 +372,29 @@ This step introduced the first slice of the new runtime architecture: a `store.S
 ### What should be done in the future
 - Implement YAML import/export inside `Load`/`Save`.
 - Introduce `TacticsDB` and include it in `State`.
+
+---
+
+## Step 9: Implement YAML import/export for project + action log
+
+This step made `pkg/store` actually useful: it now loads `.tactician/project.yaml` and `.tactician/action-log.yaml` into an in-memory SQLite DB on startup, and can export the in-memory DB back to those YAML files on save. This is the core of the “YAML source-of-truth, sqlite runtime” workflow for project state.
+
+**Commit (code):** 08303a2f8cf8ac4c5c627c758facb737e6fc810d — "Store: load/save project.yaml + action-log.yaml"
+
+### What I did
+- Defined a stable on-disk YAML shape (struct-based, deterministic sorting on write):
+  - `project.yaml` with explicit `nodes: []` and `edges: []`
+  - `action-log.yaml` as a list of log entries
+- Implemented:
+  - `store.Load(...)` → imports YAML into sqlite tables (`project`, `nodes`, `edges`, `action_log`)
+  - `state.Save(...)` → exports sqlite back to YAML files (only when `Dirty` is true)
+
+### Why
+- We need a working end-to-end loop before wiring commands: read YAML → query/mutate → write YAML.
+
+### What warrants a second pair of eyes
+- Disk YAML schema choice vs JS format (we switched to list-based nodes/edges for stable diffs).
+- Action log ordering (currently regenerated, newest first).
+
+### What should be done in the future
+- Add tactics import/export (`tactics/<id>.yaml`) and integrate into `State`.
