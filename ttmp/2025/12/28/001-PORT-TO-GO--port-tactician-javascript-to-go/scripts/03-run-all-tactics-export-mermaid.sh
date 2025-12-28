@@ -90,8 +90,10 @@ echo "== apply all tactics (best-effort) =="
 for id in "${tactic_ids[@]}"; do
   # Best-effort: keep going even if a particular apply fails.
   # `--force` is used so we can run through the full set without satisfying every dependency first.
-  out="$("$BIN" apply "$id" --yes --force 2>&1)" || ec=$? || true
-  ec="${ec:-0}"
+  set +e
+  out="$("$BIN" apply "$id" --yes --force 2>&1)"
+  ec=$?
+  set -e
 
   if [[ "$ec" -eq 0 ]]; then
     APPLIED=$((APPLIED + 1))
@@ -102,7 +104,7 @@ for id in "${tactic_ids[@]}"; do
     FAILED_IDS+=("$id")
   fi
 
-  unset ec
+  unset ec out
 done
 
 PROJECT_YAML=".tactician/project.yaml"
@@ -113,43 +115,22 @@ EDGE_COUNT="$(grep -c '^    - source:' "$PROJECT_YAML" 2>/dev/null || true)"
 ACTION_COUNT="$(grep -c '^-' "$ACTION_YAML" 2>/dev/null || true)"
 
 echo "== export mermaid (graph/goals) =="
-graph_json="$("$BIN" graph --mermaid --output json 2>/dev/null || true)"
-goals_json="$("$BIN" goals --mermaid --output json 2>/dev/null || true)"
+set +e
+graph_json="$("$BIN" graph --mermaid --output json 2>&1)"
+graph_ec=$?
+goals_json="$("$BIN" goals --mermaid --output json 2>&1)"
+goals_ec=$?
+set -e
 
-graph_mermaid="$(python3 - <<'PY'
-import json, sys
-raw = sys.stdin.read().strip()
-if not raw:
-    print("")
-    raise SystemExit(0)
-try:
-    arr = json.loads(raw)
-    if isinstance(arr, list) and arr:
-        print(arr[0].get("mermaid","") or "")
-    else:
-        print("")
-except Exception:
-    # If output is not JSON for some reason, just print the raw string.
-    print(raw)
-PY
-<<<"$graph_json")"
+graph_mermaid=""
+if [[ "$graph_ec" -eq 0 ]]; then
+  graph_mermaid="$(python3 -c 'import json,sys; arr=json.load(sys.stdin); print((arr[0].get("mermaid","") if isinstance(arr,list) and arr else "") or "")' <<<"$graph_json")"
+fi
 
-goals_mermaid="$(python3 - <<'PY'
-import json, sys
-raw = sys.stdin.read().strip()
-if not raw:
-    print("")
-    raise SystemExit(0)
-try:
-    arr = json.loads(raw)
-    if isinstance(arr, list) and arr:
-        print(arr[0].get("mermaid","") or "")
-    else:
-        print("")
-except Exception:
-    print(raw)
-PY
-<<<"$goals_json")"
+goals_mermaid=""
+if [[ "$goals_ec" -eq 0 ]]; then
+  goals_mermaid="$(python3 -c 'import json,sys; arr=json.load(sys.stdin); print((arr[0].get("mermaid","") if isinstance(arr,list) and arr else "") or "")' <<<"$goals_json")"
+fi
 
 TACTICIAN_GIT_SHA="$(cd "$TACTICIAN_MODULE" && git rev-parse HEAD 2>/dev/null || echo "unknown")"
 
@@ -171,13 +152,25 @@ TACTICIAN_GIT_SHA="$(cd "$TACTICIAN_MODULE" && git rev-parse HEAD 2>/dev/null ||
   echo "## Graph (Mermaid)"
   echo
   echo '```mermaid'
-  printf '%s\n' "$graph_mermaid"
+  if [[ -n "$graph_mermaid" ]]; then
+    printf '%s\n' "$graph_mermaid"
+  else
+    echo "ERROR: graph mermaid export was empty (exit=$graph_ec)"
+    echo
+    echo "$graph_json"
+  fi
   echo '```'
   echo
   echo "## Goals (Mermaid)"
   echo
   echo '```mermaid'
-  printf '%s\n' "$goals_mermaid"
+  if [[ -n "$goals_mermaid" ]]; then
+    printf '%s\n' "$goals_mermaid"
+  else
+    echo "ERROR: goals mermaid export was empty (exit=$goals_ec)"
+    echo
+    echo "$goals_json"
+  fi
   echo '```'
   echo
   echo "## Failed tactics (if any)"
