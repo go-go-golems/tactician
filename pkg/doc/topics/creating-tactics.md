@@ -1,6 +1,6 @@
 ---
 Title: Creating Tactics (Schema + Semantics)
-Slug: tactician-creating-tactics
+Slug: creating-tactics
 Short: How to write tactics as one YAML file per tactic, and how tactician interprets match/premises/subtasks.
 Topics:
 - tactician

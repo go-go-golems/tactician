@@ -1,7 +1,7 @@
 ---
 Title: How to Use Tactician (Go)
-Slug: tactician-how-to-use
-Short: How the Go Tactician CLI works end-to-end: YAML state, in-memory SQLite, and core workflows.
+Slug: how-to-use
+Short: "How the Go Tactician CLI works end-to-end: YAML state, in-memory SQLite, and core workflows."
 Topics:
 - tactician
 - cli
