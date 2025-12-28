@@ -563,3 +563,25 @@ This step implemented the “do it” workflow: `tactician apply <tactic-id>` no
 ### What warrants a second pair of eyes
 - Node ID strategy (JS uses output strings as IDs for premise and single-output tactics; confirm this is desired).
 - Edge creation semantics from match deps to all created nodes (mirrors JS, but review).
+
+---
+
+## Step 17: Add first unit tests (store roundtrip + tactics subtasks compatibility)
+
+This step added a small but meaningful test baseline to reduce regressions while we keep iterating on the YAML↔sqlite store and the tactics DB compatibility behaviors.
+
+**Commit (tests):** bae16136ae08e03ee7593e6262ca4548876b28f6 — "Test: store roundtrip YAML↔sqlite"  
+**Commit (tests):** a7b9a2d7fc42078ee3b3619f8ae473959cc5a5c0 — "Test: tactics subtasks from data"
+
+### What I did
+- Added a store test that:
+  - initializes a `.tactician/` directory
+  - seeds a tactic file
+  - loads state, mutates nodes + action log, saves, reloads, and asserts persistence
+- Added a tactics DB test that ensures `data.subtasks` is interpreted as subtasks (JS compatibility path).
+
+### What didn't work
+- Initial test used `t := &Tactic{...}` which shadowed `t *testing.T` and broke compilation; fixed by renaming to `tactic`.
+
+### What should be done in the future
+- Add command-level integration tests (init → add → search → apply) using a temp `.tactician/` directory and `go run` (or by directly invoking command structs).

@@ -39,8 +39,8 @@
 
 - [x] Implement helper logic (inline in commands for now): status computation, relative time parsing, ranking, dependency checks
 - [ ] Add unit tests:
-  - [ ] YAML ↔ sqlite roundtrip idempotence
-  - [ ] DB query helpers
+  - [x] YAML ↔ sqlite roundtrip (basic)
+  - [x] DB compatibility helpers (tactics data.subtasks)
   - [ ] command settings decoding
 - [ ] Add integration tests:
   - [ ] init → add node → search → apply → graph
