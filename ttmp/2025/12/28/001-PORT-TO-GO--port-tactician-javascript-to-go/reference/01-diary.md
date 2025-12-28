@@ -332,6 +332,35 @@ This step completes the remaining test gaps called out in `tasks.md`. The focus 
 - Confirm that writing state to a non-default `--tactician-dir` should *not* create `.tactician/` at all (current expectation in the test).
 - Confirm the Mermaid contract is OK as “contains `graph TD`” rather than a strict exact match.
 
+---
+
+## Step 30: Improve Mermaid labels (stop repeating id/output; include type/status)
+
+This step improved the usability of Mermaid output. Previously, the label was built as `id<br/>output`, which often repeated the same string because tactic-created nodes frequently use `id == output`. The new label builder collapses duplicates and adds more context (type + computed status).
+
+**Commit (code):** 874be4336b2625ad78b726c4558cf71ebf621528 — "Mermaid: improve node labels (avoid duplicate id/output, include type/status)"
+
+### What I changed
+- `pkg/commands/graph/graph.go`: Mermaid nodes now render as:
+  - `id` (and `output` only if different)
+  - `type`
+  - `[READY|BLOCKED|COMPLETE]`
+- `pkg/commands/goals/goals.go`: same label logic for pending goals.
+
+### Why
+- Makes large graphs reviewable and fixes the “id shown twice” issue.
+
+---
+
+## Step 31: Add a “walkthrough Mermaid” smoke script (reviewable-sized graph)
+
+This step adds a second smoke script to generate a small, meaningful graph for review. The “apply every tactic” script is a library sanity check, but it produces a huge graph; the walkthrough follows the JS reference “real project walkthrough” shape and yields a single-digit node count with interesting dependency structure.
+
+**Commit (ticket script):** d4a228e764849162e2c203f754c5e1099d7a7cbb — "Ticket: add walkthrough mermaid smoke script"
+
+### What it does
+- init → add root goal → apply+complete a small chain of tactics → export Mermaid graph/goals into a markdown report in `archive/`.
+
 ## Step 1: Initial Analysis and Documentation Setup
 
 This step established the foundation for the port by creating the ticket workspace, analyzing the JavaScript codebase, and creating comprehensive documentation mapping all commands and flags to Go implementation patterns.
