@@ -1,6 +1,6 @@
 ---
 Title: Smoke Test Playbook (Tactician Go)
-Slug: tactician-smoke-test-playbook
+Slug: smoke-test-playbook
 Short: A step-by-step smoke test procedure covering init, node ops, search, apply, graph, goals, and history.
 Topics:
 - tactician

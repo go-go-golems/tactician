@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/go-go-golems/glazed/pkg/help"
+	help_cmd "github.com/go-go-golems/glazed/pkg/help/cmd"
 	"github.com/go-go-golems/tactician/pkg/commands/apply"
 	"github.com/go-go-golems/tactician/pkg/commands/goals"
 	"github.com/go-go-golems/tactician/pkg/commands/graph"
@@ -11,6 +13,7 @@ import (
 	"github.com/go-go-golems/tactician/pkg/commands/initcmd"
 	"github.com/go-go-golems/tactician/pkg/commands/node"
 	"github.com/go-go-golems/tactician/pkg/commands/search"
+	"github.com/go-go-golems/tactician/pkg/doc"
 	"github.com/spf13/cobra"
 )
 
@@ -23,6 +26,16 @@ func buildRoot() *cobra.Command {
 
 func main() {
 	root := buildRoot()
+
+	helpSystem := help.NewHelpSystem()
+	err := doc.AddDocToHelpSystem(helpSystem)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error loading documentation: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Set up help system with UI support
+	help_cmd.SetupCobraRootCommand(helpSystem, root)
 
 	if err := initcmd.RegisterInitCommands(root); err != nil {
 		fmt.Fprintf(os.Stderr, "Error registering init commands: %v\n", err)
