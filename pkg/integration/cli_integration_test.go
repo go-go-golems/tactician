@@ -183,4 +183,68 @@ func TestCLI_InitAddApply(t *testing.T) {
 	}
 }
 
+func TestCLI_FlagCombinations(t *testing.T) {
+	base := t.TempDir()
+
+	// Build binary once.
+	bin := filepath.Join(base, "tactician")
+	build := exec.Command("go", "build", "-o", bin, "./cmd/tactician")
+
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd: %v", err)
+	}
+	build.Dir = filepath.Clean(filepath.Join(wd, "..", ".."))
+
+	out, err := build.CombinedOutput()
+	if err != nil {
+		t.Fatalf("go build failed: %v\n%s", err, string(out))
+	}
+
+	// Scenario A: `--tactician-dir` override should isolate state into a custom dir.
+	dirA := t.TempDir()
+	runInDir := func(dir string, args ...string) {
+		cmd := exec.Command(bin, args...)
+		cmd.Dir = dir
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("command failed: %v\ndir=%s\nargs=%v\noutput=\n%s", err, dir, args, string(out))
+		}
+	}
+	runFailInDir := func(dir string, args ...string) string {
+		cmd := exec.Command(bin, args...)
+		cmd.Dir = dir
+		out, err := cmd.CombinedOutput()
+		if err == nil {
+			t.Fatalf("expected command to fail\ndir=%s\nargs=%v\noutput=\n%s", dir, args, string(out))
+		}
+		return string(out)
+	}
+
+	runInDir(dirA, "init", "--tactician-dir", "state-a")
+	if _, err := os.Stat(filepath.Join(dirA, "state-a", "project.yaml")); err != nil {
+		t.Fatalf("expected state-a/project.yaml to exist: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dirA, ".tactician", "project.yaml")); err == nil {
+		t.Fatalf("did not expect default .tactician/project.yaml when using --tactician-dir override")
+	}
+
+	// Scenario B: short flag `-f` should work for node delete and allow flags after args.
+	dirB := t.TempDir()
+
+	runInDir(dirB, "init")
+	runInDir(dirB, "node", "add", "root", "README.md", "--type", "project_artifact", "--status", "pending")
+	runInDir(dirB, "node", "edit", "root", "--status", "complete")
+	runInDir(dirB, "apply", "gather_requirements", "--yes")
+	runInDir(dirB, "apply", "write_technical_spec", "--yes", "--force")
+
+	outStr := runFailInDir(dirB, "node", "delete", "requirements_document")
+	if !bytes.Contains([]byte(outStr), []byte("use --force")) {
+		t.Fatalf("expected delete failure output to mention --force\noutput=\n%s", outStr)
+	}
+
+	// Flags after args.
+	runInDir(dirB, "node", "delete", "requirements_document", "-f")
+}
+
 
