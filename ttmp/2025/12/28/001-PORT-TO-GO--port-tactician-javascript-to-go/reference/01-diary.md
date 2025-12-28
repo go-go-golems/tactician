@@ -470,3 +470,29 @@ This step completed the initialization story: `tactician init` now seeds a built
 
 ### What should be done in the future
 - Implement actual command logic using `store.Load`/`Save`, starting with `node add/show/edit/delete`.
+
+---
+
+## Step 13: Implement node commands against YAML-backed state
+
+This step wired the first real “business” commands to the new persistence model. The node subcommands (`add`, `show`, `edit`, `delete`) now load `.tactician/` YAML into an in-memory SQLite DB, perform SQL mutations/queries, and save back to YAML on success for mutating operations.
+
+**Commit (code):** b140a4360619b6c9bb24028676001e57d0f79ea2 — "Node: implement add/show/edit/delete with YAML-backed state"
+
+### What I did
+- Implemented:
+  - `node add` (mutating): insert node + log action + save YAML
+  - `node show` (read-only): batch output rows via Glazed
+  - `node edit` (mutating): batch status update + log action(s) + save YAML
+  - `node delete` (mutating): enforce blocks unless `--force` + log action + save YAML
+- All commands decode `--tactician-dir` and use `store.Load` for state lifecycle.
+
+### Why
+- Nodes/edges are the core project graph; implementing these validates the overall architecture end-to-end.
+
+### What warrants a second pair of eyes
+- Status semantics: timestamping `completed_at` only on “complete”.
+- Delete semantics: “blocks” detection (uses outgoing edges).
+
+### What should be done in the future
+- Implement `graph`, `goals`, and `history` on top of the same store layer.
