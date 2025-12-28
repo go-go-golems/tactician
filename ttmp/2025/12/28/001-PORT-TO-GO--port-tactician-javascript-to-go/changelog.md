@@ -47,3 +47,8 @@ Added package structure documentation: package github.com/go-go-golems/tactician
 
 Added file location notes to each command section showing package path and file structure (pkg/commands/{group}/{command}.go and root.go)
 
+
+## 2025-12-28
+
+Closed (review): Go port complete; see diary + smoke scripts + archive Mermaid exports
+

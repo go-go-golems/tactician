@@ -14,10 +14,11 @@ Owners: []
 RelatedFiles: []
 ExternalSources: []
 Summary: ""
-LastUpdated: 2025-12-28T15:37:54.528374158-05:00
-WhatFor: "Add first-class node metadata (title/description + instantiation note) to make DAG nodes, action logs, and Mermaid exports more informative."
-WhenToUse: "When implementing or reviewing node metadata UX improvements (CLI output, apply logging, Mermaid rendering)."
+LastUpdated: 2025-12-28T15:53:46.515532012-05:00
+WhatFor: Add first-class node metadata (title/description + instantiation note) to make DAG nodes, action logs, and Mermaid exports more informative.
+WhenToUse: When implementing or reviewing node metadata UX improvements (CLI output, apply logging, Mermaid rendering).
 ---
+
 
 # Add node title + description
 
