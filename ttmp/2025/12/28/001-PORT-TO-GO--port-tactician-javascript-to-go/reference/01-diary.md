@@ -496,3 +496,30 @@ This step wired the first real “business” commands to the new persistence mo
 
 ### What should be done in the future
 - Implement `graph`, `goals`, and `history` on top of the same store layer.
+
+---
+
+## Step 14: Implement graph/goals/history commands via store
+
+This step expanded the “read-only” surface area: `graph`, `goals`, and `history` now work end-to-end by loading YAML into the in-memory sqlite DB and emitting structured output via Glazed. This validates that the store layer supports both graph queries (nodes/edges) and action log queries.
+
+**Commit (code):** 57440ced9e201f632cd0388c4862f2223b5ef936 — "Commands: implement graph/goals/history via store"
+
+### What I did
+- `graph`:
+  - selects a root (explicit goal-id, else project meta root_goal, else first root without incoming edges)
+  - emits a depth-first traversal as rows
+  - supports a basic `--mermaid` output (single-row string for now)
+- `goals`:
+  - lists pending nodes with computed actual status (ready/blocked)
+  - supports a basic `--mermaid` output for pending goals
+- `history`:
+  - lists action log entries with `--limit` and `--since`
+  - supports `--summary` using `ProjectDB.GetSessionSummary`
+
+### What warrants a second pair of eyes
+- Mermaid outputs are currently “minimal”; confirm desired output contract (single row vs plain text).
+- Relative time parsing (`--since`) supports s/m/h/d/w; confirm that matches expectations.
+
+### What should be done in the future
+- Implement `search` and `apply` against the tactics + project store layer to complete the core CLI.
