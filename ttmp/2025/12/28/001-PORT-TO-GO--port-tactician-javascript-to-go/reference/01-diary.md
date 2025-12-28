@@ -26,6 +26,50 @@ Document the step-by-step process of porting Tactician CLI from JavaScript to Go
 
 ---
 
+## Step 20: Capture the smoke test as a ticket script
+
+This step turned the smoke test playbook into a single runnable bash script stored in the ticket, so we can rerun it quickly and paste verbatim output into the diary whenever we refactor. The motivation is reproducibility: one command to validate “init → node ops → search → apply → goals/graph/history → delete”.
+
+**Commit (code):** N/A — ticket script only (no compilation performed in this step)
+
+### What I did
+- Added `scripts/01-run-smoke-test.sh` under the ticket workspace, mirroring `pkg/doc/playbooks/smoke-test.md`.
+- Made the script leave the temp work directory on disk by default to aid debugging (`KEEP_WORK=1`), with an opt-out (`KEEP_WORK=0`).
+
+### Why
+- Running the smoke test is the fastest way to decide what to fix next after refactors.
+- Capturing it as a script avoids copy/paste drift and makes failures easier to share and compare.
+
+### What worked
+- The script is self-contained and uses absolute paths into this workspace.
+
+### What didn't work
+- The actual smoke test run was not executed yet (previous attempt was declined in the terminal runner), so we still need to run this script and record real outputs/errors.
+
+### What I learned
+- Keeping `WORK` around is extremely useful when debugging YAML persistence and action log output; deleting it by default would slow iteration.
+
+### What was tricky to build
+- Making sure failure semantics match the playbook: the unforced delete is allowed to fail (expected sometimes), but everything else should flip the overall exit code.
+
+### What warrants a second pair of eyes
+- Confirm the absolute-path assumption is acceptable for a ticket script (vs trying to infer repo root).
+- Confirm the “keep WORK unless KEEP_WORK=0” default matches how we want to debug this project.
+
+### What should be done in the future
+- Run `./scripts/01-run-smoke-test.sh` and paste its output (or key failures) into the next diary step.
+- Consider adding a small wrapper that logs output to a timestamped file under the ticket `various/` directory for easy archiving. 
+
+### Code review instructions
+- Start at `scripts/01-run-smoke-test.sh`.
+- Validate by running it from the ticket directory:
+  - `bash scripts/01-run-smoke-test.sh`
+
+### Technical details
+- The script runs `go test ./... -count=1` in `tactician/` first, then executes the smoke test commands via `go run` in a temp directory.
+
+---
+
 ## Step 1: Initial Analysis and Documentation Setup
 
 This step established the foundation for the port by creating the ticket workspace, analyzing the JavaScript codebase, and creating comprehensive documentation mapping all commands and flags to Go implementation patterns.
