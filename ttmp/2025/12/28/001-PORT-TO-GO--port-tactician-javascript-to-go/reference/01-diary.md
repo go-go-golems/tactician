@@ -324,3 +324,25 @@ This step updated the ticket plan to reflect the pivot: remove disk DB work and 
 ### What should be done next
 - Implement `pkg/store` and refactor command settings away from DB paths.
 - Implement `init` to create `.tactician/` YAML structure and import default tactics.
+
+---
+
+## Step 7: Add `--tactician-dir` setting (stop exposing DB-path flags)
+
+This step made the first concrete code change toward the YAML persistence model: commands now accept a `--tactician-dir` flag (default `.tactician`) rather than `--project-db-path`/`--tactics-db-path`. It’s mostly plumbing, but it’s an important UX contract because the persistent state is no longer a DB file path.
+
+**Commit (code):** 8ba431b881e8544544690a7934b7a7b43718d77f — "CLI: add --tactician-dir and stop using DB-path section"
+
+### What I did
+- Added `pkg/commands/sections/tactician.go` with a `tactician` schema section (prefix `tactician-`, field `dir`).
+- Updated all command schemas to include the new section and removed the old project DB-path section from their schemas.
+- Verified compilation with `cd tactician && go test ./...`.
+
+### Why
+- Disk DB paths are no longer meaningful; the stable persisted surface area is the `.tactician/` YAML directory.
+
+### What warrants a second pair of eyes
+- Flag naming / UX: ensure `--tactician-dir` is discoverable and doesn’t clash with Glazed output flags.
+
+### What should be done in the future
+- Implement `pkg/store` that uses `tactician.dir` to load/save YAML around an in-memory SQLite DB.
