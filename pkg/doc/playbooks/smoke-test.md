@@ -25,6 +25,7 @@ You need a working Go toolchain and access to the `tactician/` module.
 
 ```bash
 cd tactician && go test ./...
+go build -o /tmp/tactician ./cmd/tactician
 ```
 
 ## Test environment setup
@@ -34,6 +35,9 @@ This section creates a clean working directory so the test is deterministic.
 ```bash
 WORK="$(mktemp -d)"
 cd "$WORK"
+
+# Use the prebuilt binary from the preconditions step.
+TACTICIAN="/tmp/tactician"
 ```
 
 ## 1) Initialize a project (`init`)
@@ -41,7 +45,7 @@ cd "$WORK"
 This step validates `.tactician/` scaffolding and default tactics seeding.
 
 ```bash
-go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician init
+"$TACTICIAN" init
 ```
 
 Expected:
@@ -54,7 +58,7 @@ Expected:
 This step validates YAML → in-memory sqlite load, mutation, and YAML save.
 
 ```bash
-go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician node add root README.md --type project_artifact --status pending
+"$TACTICIAN" node add root README.md --type project_artifact --status pending
 ```
 
 Expected:
@@ -66,7 +70,7 @@ Expected:
 This step validates batch positional arguments and Glazed structured output.
 
 ```bash
-go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician node show root
+"$TACTICIAN" node show root
 ```
 
 Expected:
@@ -77,7 +81,7 @@ Expected:
 This step validates status updates and completion timestamps.
 
 ```bash
-go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician node edit root --status complete
+"$TACTICIAN" node edit root --status complete
 ```
 
 Expected:
@@ -89,9 +93,9 @@ Expected:
 This step validates tactics import (file-per-tactic), keyword ranking, and readiness filters.
 
 ```bash
-go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician search requirements
-go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician search --ready
-go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician search --tags planning,requirements
+"$TACTICIAN" search requirements
+"$TACTICIAN" search --ready
+"$TACTICIAN" search --tags planning,requirements
 ```
 
 Expected:
@@ -105,7 +109,7 @@ This step validates end-to-end: tactic selection → dependency checks → node/
 Use a dependency-free tactic first:
 
 ```bash
-go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician apply gather_requirements --yes
+"$TACTICIAN" apply gather_requirements --yes
 ```
 
 Expected:
@@ -115,7 +119,7 @@ Expected:
 Now apply a tactic with dependencies (should succeed if dependencies are complete; otherwise use `--force` to validate behavior):
 
 ```bash
-go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician apply write_technical_spec --yes --force
+"$TACTICIAN" apply write_technical_spec --yes --force
 ```
 
 Expected:
@@ -127,8 +131,8 @@ Expected:
 This step validates “actual status” computation (ready vs blocked) and pending node listing.
 
 ```bash
-go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician goals
-go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician goals --mermaid
+"$TACTICIAN" goals
+"$TACTICIAN" goals --mermaid
 ```
 
 Expected:
@@ -140,8 +144,8 @@ Expected:
 This step validates node/edge traversal and root selection.
 
 ```bash
-go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician graph
-go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician graph --mermaid
+"$TACTICIAN" graph
+"$TACTICIAN" graph --mermaid
 ```
 
 Expected:
@@ -153,9 +157,9 @@ Expected:
 This step validates action log queries and time filters.
 
 ```bash
-go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician history
-go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician history --summary
-go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician history --since 1d
+"$TACTICIAN" history
+"$TACTICIAN" history --summary
+"$TACTICIAN" history --since 1d
 ```
 
 Expected:
@@ -168,10 +172,10 @@ This step validates blocked-node protection.
 
 ```bash
 # This may fail if the node blocks others; that is expected.
-go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician node delete requirements_document
+"$TACTICIAN" node delete requirements_document
 
 # If the unforced delete failed due to blocking, force delete should succeed.
-go run /home/manuel/workspaces/2025-12-28/port-tactician-go/tactician/cmd/tactician node delete requirements_document --force
+"$TACTICIAN" node delete requirements_document --force
 ```
 
 Expected:

@@ -281,6 +281,28 @@ This step made the repro script resilient: the ticket workspace doesn’t always
 
 ---
 
+## Step 28: Expand CLI integration test; update smoke playbook to use built binary
+
+This step hardens the project against regressions by turning more of the smoke-test surface area into an automated integration test. In parallel, it fixes the smoke test playbook itself so it can be executed from a temp directory without relying on `go run` with absolute paths (which is easy to misuse outside a module context).
+
+**Commit (tests):** cba9ed65de09d3c1bb5271f0a9eaef4d7de7f826 — "Test: extend CLI integration to cover search/graph/goals/history/delete"
+
+### What I did
+- Extended `pkg/integration/cli_integration_test.go` to:
+  - run `search`, `graph`, `goals`, `history` after applying tactics,
+  - assert the dependency edge `requirements_document -> technical_specification` exists in `project.yaml`,
+  - assert `node delete requirements_document` fails without `--force` and succeeds with `--force`.
+- Updated `pkg/doc/playbooks/smoke-test.md` to:
+  - build a binary once (`go build -o /tmp/tactician ./cmd/tactician`),
+  - run the smoke steps from the temp dir via `"$TACTICIAN"` so module context doesn’t matter.
+
+### Why
+- Integration tests catch subtle semantic regressions (like missing edges) that “command runs without crashing” won’t.
+- The playbook should be copy/paste safe and should not depend on fragile `go run` path assumptions.
+
+### What warrants a second pair of eyes
+- Verify the integration test’s assumptions align with desired CLI semantics (especially delete behavior and edge direction).
+
 ## Step 1: Initial Analysis and Documentation Setup
 
 This step established the foundation for the port by creating the ticket workspace, analyzing the JavaScript codebase, and creating comprehensive documentation mapping all commands and flags to Go implementation patterns.
