@@ -248,3 +248,79 @@ This step introduced the first reusable schema building block: a dedicated schem
 
 ### What I'd do differently next time
 - Add a quick help snapshot for one command (e.g. `go run ./cmd/tactician graph --help`) to sanity-check how the flags render to users.
+
+---
+
+## Step 4: Implement ProjectDB SQLite wrapper (baseline query engine)
+
+This step implemented a Go `ProjectDB` wrapper mirroring the JavaScript `ProjectDB` API (schema init, nodes/edges, action log, YAML import/export helpers). It was initially oriented around opening SQLite by a path, but the core value is the query surface area: it gives us a faithful SQL model we can later run purely in-memory.
+
+**Commit (code):** c4248d4b857588b507c2e1a9dea1df00e0df28fb — "DB: add ProjectDB sqlite wrapper"
+
+### What I did
+- Added `pkg/db/project.go`, `pkg/db/sqlite.go`, `pkg/db/types.go`.
+- Implemented ProjectDB methods aligned with `js-version/tactician/src/db/project.js`:
+  - schema (`project`, `nodes`, `edges`, `action_log`)
+  - `add/get/update/delete` nodes
+  - `add/get` edges + dependency queries
+  - action logging + session summary
+  - YAML import/export utilities (string-based)
+- Ensured the module compiles (`go test ./...`) and committed at the first green build.
+
+### Why
+- We need the SQL query semantics early (dependencies, blocked-by, history ordering) to keep parity with the JS CLI while we refactor the persistence model.
+
+### What worked
+- Using `modernc.org/sqlite` keeps the DB driver cgo-free and works well for future in-memory usage.
+
+### What didn't work
+- The initial implementation still “thinks in disk DB paths”, which is incompatible with the new persistence direction (YAML-on-disk + memory DB).
+
+### What was tricky to build
+- Ensuring time parsing/formatting is consistent (RFC3339Nano everywhere) so logs and node timestamps roundtrip.
+
+### What warrants a second pair of eyes
+- Schema parity with JS (especially edge direction semantics for dependencies vs blocks).
+- YAML import/export stability (map ordering and canonicalization will matter once YAML becomes source-of-truth).
+
+### What should be done in the future
+- Refactor DB wrappers to accept an injected `*sql.DB` so they can be used with a single in-memory DB created on command start.
+
+---
+
+## Step 5: Decide persistence model pivot (YAML source-of-truth + in-memory sqlite)
+
+This step captured the key architectural decision: make `.tactician/` YAML files the only persistent state and treat SQLite as a transient in-memory query engine loaded from YAML at command start. This is a big simplification for portability and “state visibility”, while still allowing SQL-powered queries.
+
+**Commit (docs):** bcbf7a64917d8726270326d77e58fd1d084f7e04 — "Docs: analyze YAML source-of-truth + in-memory sqlite"
+
+### What I did
+- Wrote `analysis/02-yaml-source-of-truth-with-in-memory-sqlite.md` with:
+  - `.tactician/` layout proposal (including one-file-per-tactic)
+  - import/export lifecycle
+  - required changes to commands and settings
+
+### Why
+- Disk-backed sqlite DBs make state opaque and harder to review/merge.
+- YAML-on-disk allows “git-native” state and easy manual inspection, while SQL stays available at runtime.
+
+### What warrants a second pair of eyes
+- YAML layout tradeoffs (single `project.yaml` vs per-node files, append-only log vs regenerate).
+- Whether read-only commands should ever rewrite/canonicalize YAML (initially: no).
+
+---
+
+## Step 6: Rebase implementation tasks around YAML persistence
+
+This step updated the ticket plan to reflect the pivot: remove disk DB work and instead implement a `store` layer that loads YAML into an in-memory SQLite DB on command start and writes back on mutation. It also re-scoped command work to explicitly “load state → query/mutate → (save if needed)”.
+
+**Commit:** N/A (pending in this step)
+
+### What I did
+- Updated `tasks.md` to:
+  - mark early scaffolding work as done/obsolete
+  - add concrete tasks for `--tactician-dir`, `pkg/store`, YAML import/export, and command refactors
+
+### What should be done next
+- Implement `pkg/store` and refactor command settings away from DB paths.
+- Implement `init` to create `.tactician/` YAML structure and import default tactics.
