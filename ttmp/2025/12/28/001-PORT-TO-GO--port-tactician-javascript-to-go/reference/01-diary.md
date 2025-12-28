@@ -420,3 +420,30 @@ This step made the first end-user command actually do something in the new world
 
 ### What should be done in the future
 - Load default tactics and write them as one-file-per-tactic under `.tactician/tactics/`.
+
+---
+
+## Step 11: Implement TacticsDB + file-per-tactic YAML import/export
+
+This step completed the other half of the “state load” story: tactics are now stored as **one YAML file per tactic** under `.tactician/tactics/`, imported into the in-memory sqlite DB on command start, and exported back to files on save. This keeps tactics fully reviewable while still enabling SQL queries for search/filtering.
+
+**Commit (code):** e6bab4b9236e3a530e17559310805601defc1a4a — "Store: add tactics import/export + TacticsDB"
+
+### What I did
+- Added `pkg/db/tactics.go` + `pkg/db/tactics_types.go`:
+  - sqlite schema (`tactics`, `tactic_dependencies`, `tactic_subtasks`)
+  - CRUD and a minimal filter-style `SearchTactics`
+- Added `pkg/store` tactics IO:
+  - read all `.tactician/tactics/*.yaml`
+  - export tactics back to files and prune stale files
+- Wired tactics into `store.State` (`Load` imports; `Save` exports).
+
+### Why
+- Tactics are central reusable knowledge; keeping them as individual YAML files makes review/curation practical.
+
+### What warrants a second pair of eyes
+- DB schema parity with JS (dependency types `match` vs `premise`, subtasks depends_on encoding).
+- File pruning behavior on save (deleting tactic files not present in DB).
+
+### What should be done in the future
+- Update `init` to seed default tactics into `.tactician/tactics/` from the JS defaults.
