@@ -202,6 +202,31 @@ func mermaidID(id string) string {
 	return mermaidSanitizeRe.ReplaceAllString(id, "_")
 }
 
+func mermaidLabel(id, output, typ, status string) string {
+	parts := []string{}
+	id = strings.TrimSpace(id)
+	output = strings.TrimSpace(output)
+	typ = strings.TrimSpace(typ)
+	status = strings.TrimSpace(status)
+
+	if id != "" {
+		parts = append(parts, id)
+	}
+	if output != "" && output != id {
+		parts = append(parts, output)
+	}
+	if typ != "" {
+		parts = append(parts, typ)
+	}
+	if status != "" {
+		parts = append(parts, "["+strings.ToUpper(status)+"]")
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return strings.Join(parts, "<br/>")
+}
+
 func buildMermaidGoals(ctx context.Context, st *store.State, pending []*db.Node) (string, error) {
 	sb := strings.Builder{}
 	sb.WriteString("graph TD\n")
@@ -219,7 +244,7 @@ func buildMermaidGoals(ctx context.Context, st *store.State, pending []*db.Node)
 		sb.WriteString("  ")
 		sb.WriteString(mermaidID(n.ID))
 		sb.WriteString("[\"")
-		label := n.ID + "<br/>" + n.Output + "<br/>[" + strings.ToUpper(status) + "]"
+		label := mermaidLabel(n.ID, n.Output, n.Type, status)
 		sb.WriteString(strings.ReplaceAll(label, "\"", "\\\""))
 		sb.WriteString("\"]\n")
 	}

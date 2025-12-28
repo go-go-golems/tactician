@@ -228,20 +228,45 @@ func mermaidID(id string) string {
 	return mermaidSanitizeRe.ReplaceAllString(id, "_")
 }
 
+func mermaidLabel(id, output, typ, status string) string {
+	// Build a useful label without repeating id/output when they’re identical.
+	parts := []string{}
+	id = strings.TrimSpace(id)
+	output = strings.TrimSpace(output)
+	typ = strings.TrimSpace(typ)
+	status = strings.TrimSpace(status)
+
+	if id != "" {
+		parts = append(parts, id)
+	}
+	if output != "" && output != id {
+		parts = append(parts, output)
+	}
+	if typ != "" {
+		parts = append(parts, typ)
+	}
+	if status != "" {
+		parts = append(parts, "["+strings.ToUpper(status)+"]")
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return strings.Join(parts, "<br/>")
+}
+
 func buildMermaidGraph(ctx context.Context, st *store.State, nodes []*db.Node, edges []db.Edge) (string, error) {
-	_ = ctx
-	_ = st
-	_ = nodes
-	_ = edges
-	// TODO(manuel): Implement proper mermaid output (status classes, labels).
-	// For now, emit a basic graph to keep the flag working.
 	sb := strings.Builder{}
 	sb.WriteString("graph TD\n")
 	for _, n := range nodes {
+		status, err := computeNodeStatus(ctx, st, n.ID)
+		if err != nil {
+			return "", err
+		}
 		sb.WriteString("  ")
 		sb.WriteString(mermaidID(n.ID))
 		sb.WriteString("[\"")
-		sb.WriteString(strings.ReplaceAll(n.ID+"<br/>"+n.Output, "\"", "\\\""))
+		label := mermaidLabel(n.ID, n.Output, n.Type, status)
+		sb.WriteString(strings.ReplaceAll(label, "\"", "\\\""))
 		sb.WriteString("\"]\n")
 	}
 	for _, e := range edges {
