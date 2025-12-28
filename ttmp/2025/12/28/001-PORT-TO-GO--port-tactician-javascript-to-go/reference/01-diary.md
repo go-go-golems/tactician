@@ -607,3 +607,116 @@ This step added a black-box smoke test that builds the `tactician` binary and ru
 
 ### What should be done in the future
 - Extend the smoke test to cover `search` and `graph` outputs, and basic `--mermaid` flows.
+
+---
+
+## Step 19: Documentation for developers and users
+
+After completing the core CLI implementation, we created a comprehensive documentation set to help future developers continue the work and users understand how to use tactician. This step focused on making the system accessible through clear explanations, examples, and playbooks.
+
+**Commits (docs):**
+- Index: c88cdbbaa22c781453961ad1990833e23d3891ed — "Docs: add pkg/doc index"
+- How-to-use: b8a8bc027e8343e7bccd19dfec960d9ba393b07b — "Docs: add how-to-use"
+- Creating tactics: d0e1e06438a6e3ec03620a241869cea027d64487 — "Docs: creating tactics"
+- Smoke test: e0d98a026aacd322e35a435f1c9008ee6162523e — "Docs: add smoke test playbook"
+- Enhancements: 89a7c5c29fec617048cc1a2e9be867b863bb7b98 — "Docs: enhance how-to-use + creating-tactics (prose + diagrams)"
+
+### What I did
+
+1. Created `pkg/doc/` structure with topics/ and playbooks/ subdirectories
+2. Wrote comprehensive documentation:
+   - **how-to-use.md**: Explains the YAML + in-memory SQLite architecture, command lifecycle diagram, all commands with examples, and recommended workflows
+   - **creating-tactics.md**: Documents tactic schema (YAML fields), dependency semantics (match vs premises with practical examples), application semantics (what nodes/edges get created), and search ranking factors
+   - **smoke-test.md**: Complete playbook for testing all features (init → add → apply → graph → goals → history → search → edit → delete with expected outputs)
+3. Enhanced docs with narrative paragraphs, ASCII lifecycle diagram, tactic application visualization, and practical "before/after" examples
+4. Added README.md index linking to all doc categories
+
+### Why
+
+Documentation serves three critical purposes:
+1. **Onboarding**: New developers need to understand the architecture decisions (why YAML + in-memory sqlite) and how components fit together
+2. **Usage**: Users need clear examples and workflows to use tactician effectively
+3. **Extension**: Future work (LLM rerank, mermaid improvements) needs context on current behavior and design constraints
+
+The smoke test playbook specifically addresses "how do I know this works" by giving a step-by-step validation sequence.
+
+### What worked
+
+- Following the Glazed doc style (frontmatter + topic-focused intros) made the docs feel consistent with the framework
+- Adding diagrams (ASCII lifecycle flow, tactic application visualization) clarified the load→execute→save pattern and what edges get created
+- The smoke test playbook format (command → expected result → what to check) is immediately actionable
+- Explaining "why this design" (e.g., why in-memory only, why YAML not DB files) preempts common questions
+
+### What didn't work
+
+- N/A (documentation phase, no implementation failures)
+
+### What I learned
+
+- **Narrative context matters**: Adding 1-2 intro paragraphs per section (explaining purpose and relationships) dramatically improves comprehension compared to pure structured content.
+- **Diagrams should be simple**: A 10-line ASCII box showing the command lifecycle communicates more than a paragraph explaining load→execute→save.
+- **Examples > abstractions**: Showing a concrete before/after graph when applying a tactic (with match/premises) is clearer than describing it abstractly.
+
+### What was tricky to build
+
+- **Balancing completeness with conciseness**: The docs need to explain enough for new developers to understand the system, but not so much that they become overwhelming reference manuals instead of guides.
+- **Choosing what to diagram**: Not every concept needs a diagram. Focus on flows (command lifecycle, tactic application) and state transitions.
+- **Premise semantics**: The "premise exists but pending = blocking" behavior is subtle and needed a concrete example to clarify.
+
+### What warrants a second pair of eyes
+
+- **Doc organization**: Confirm the topics/ vs playbooks/ split makes sense and docs are easy to discover.
+- **Technical accuracy**: Verify dependency semantics (especially the "premise exists but pending" behavior) match the actual implementation in `pkg/commands/apply/apply.go`.
+- **Smoke test coverage**: Check if the playbook covers all critical paths or if important scenarios are missing (e.g., cycles, complex subtask graphs).
+
+### What should be done in the future
+
+1. **Expand smoke test**: Add scenarios for edge cases (what happens when you try to apply a tactic twice, delete a node that blocks others, create a cycle).
+2. **Add troubleshooting guide**: Document common errors users will hit ("node already exists", "dependencies not satisfied", "not a tactician project") with solutions.
+3. **LLM rerank documentation**: Once `--llm-rerank` is implemented, document when to use it, how to configure API keys, and what the reranking model optimizes for.
+4. **Tutorial walkthrough**: Add a "first 5 minutes with tactician" tutorial that shows a complete workflow from init to applying 3 tactics and seeing the graph grow.
+
+### Code review instructions
+
+- Read the three main docs in order: how-to-use.md (architecture + commands), creating-tactics.md (authoring guide), smoke-test.md (validation playbook)
+- Verify technical accuracy by cross-referencing with actual implementation:
+  - `pkg/store/state.go` — load/save lifecycle
+  - `pkg/commands/apply/apply.go` — tactic application semantics
+  - `pkg/commands/search/search.go` — ranking factors
+- Validate smoke test by running it:
+  ```bash
+  cd tactician
+  go build -o /tmp/tactician ./cmd/tactician
+  # Follow playbook in pkg/doc/playbooks/smoke-test.md
+  ```
+
+### Technical details
+
+**Documentation structure:**
+```
+pkg/doc/
+  README.md                    # Index of all docs
+  topics/
+    how-to-use.md             # Architecture + command reference (241 lines)
+    creating-tactics.md       # Tactic authoring guide (239 lines)
+  playbooks/
+    smoke-test.md             # Feature validation playbook (195 lines)
+```
+
+**Key concepts documented:**
+- YAML source-of-truth persistence model with `.tactician/` layout
+- In-memory SQLite runtime model with ASCII lifecycle diagram
+- Dependency types: match (required) vs premises (introducible) with concrete examples
+- Search ranking factors (readiness +1000/-500, critical path, keywords, goal alignment)
+- Application semantics: what nodes/edges get created for different tactic shapes
+- Complete command reference with copy-paste examples
+
+**Where to continue:**
+- Next developer should start at `pkg/doc/topics/how-to-use.md` for architecture overview
+- Then read `ttmp/2025/12/28/001-PORT-TO-GO/analysis/02-yaml-source-of-truth-with-in-memory-sqlite.md` for design rationale
+- Reference implementations: `pkg/store/state.go` (persistence), `pkg/commands/apply/apply.go` (tactic logic)
+
+### What I'd do differently next time
+
+- Add the smoke test playbook earlier (before integration test) so it can guide test development
+- Consider embedding a quick-start example directly in the main README.md for immediate discoverability
