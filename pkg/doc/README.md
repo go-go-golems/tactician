@@ -31,4 +31,8 @@ This directory contains developer-facing documentation for the Go port of Tactic
 
 `pkg/doc/playbooks/smoke-test.md`
 
+### Feature development playbook (Tactician + docmgr)
+
+`pkg/doc/playbooks/feature-development-with-tactician-and-docmgr.md`
+
 
