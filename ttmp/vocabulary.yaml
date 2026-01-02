@@ -1,3 +1,20 @@
-topics: []
-docTypes: []
-intent: []
+topics:
+    - slug: tactician
+      description: Tactician
+    - slug: cli
+      description: Command-line interface
+    - slug: docs
+      description: Documentation
+    - slug: readme
+      description: README
+docTypes:
+    - slug: index
+      description: Ticket index
+    - slug: reference
+      description: Reference document
+intent:
+    - slug: long-term
+      description: Long-lived documentation
+status:
+    - slug: active
+      description: Active / in progress
