@@ -59,3 +59,11 @@ TACTICIAN_BINARY=$(shell which tactician)
 install:
 	go build -o ./dist/tactician ./cmd/tactician && \
 		cp ./dist/tactician $(TACTICIAN_BINARY)
+
+.PHONY: logcopter-generate
+logcopter-generate:
+	GOWORK=off go tool logcopter-gen -include-main -var zlog -area-prefix go-go-golems.tactician -strip-prefix github.com/go-go-golems/tactician ./cmd/... ./pkg/...
+
+.PHONY: logcopter-check
+logcopter-check:
+	GOWORK=off go tool logcopter-gen -include-main -var zlog -area-prefix go-go-golems.tactician -strip-prefix github.com/go-go-golems/tactician -check ./cmd/... ./pkg/...
